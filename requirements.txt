@@ -1,0 +1,10 @@
+flask>=3.0.0
+ccxt>=4.4.0
+yfinance>=0.2.50
+pandas>=2.2.0
+numpy>=1.26.0
+requests>=2.32.0
+python-dotenv>=1.0.1
+
+# Optional; install on Windows only for MT5 Demo connectivity
+MetaTrader5>=5.0.45; platform_system == "Windows"

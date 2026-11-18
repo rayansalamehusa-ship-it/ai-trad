@@ -1,0 +1,2 @@
+pywebview>=5.0
+MetaTrader5>=5.0.45

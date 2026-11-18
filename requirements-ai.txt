@@ -1,0 +1,2 @@
+crewai[tools,google-genai]>=0.100.0
+google-genai>=1.0.0
