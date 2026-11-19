@@ -1,5 +1,6 @@
 """محرك التحليل: analyze() للوضع المحلي (متعدد الفريمات، شراء/بيع، صفقات أو سكالبينج)، run_ai() لوضع CrewAI، scan() لمسح عدة أصول."""
 import os, time
+import context_engine as CX
 from tools import assets as A, brain, grok, lab, market_tools as m, strategies as S, market_models as MM
 
 os.environ.setdefault("OTEL_SDK_DISABLED", "true")
@@ -7,6 +8,7 @@ os.environ.setdefault("OTEL_SDK_DISABLED", "true")
 STEPS = [
     ("price", "مراقب الأسعار", "Price Watcher"),
     ("news", "محلل الأخبار", "News Scout"),
+    ("context", "فاهم السياق", "Context Analyst"),
     ("strategist", "باحث الاستراتيجيات", "Strategy Researcher"),
     ("hunter", "صياد الفرص", "Opportunity Hunter"),
     ("simulator", "مهندس المحاكاة", "Backtester"),
@@ -38,12 +40,13 @@ def parse_decision(text):
     return "APPROVED" if a < r else "REJECTED"
 
 
-# ---------------------------------------------------------------- جمع البيانات لفريم واحد
-def _tf_view(symbol, tf, items):
+# ---------------------------------------------------------------- جمع البيانات (مرحلة 1: بلا استراتيجيات)
+def _tf_base(symbol, tf):
+    """مؤشرات فريم واحد بلا تقييم استراتيجيات — كافية لفهم السياق ولرسم الشارت."""
     ex, df = m.candles(symbol, tf)
     if len(df) < 150:
         raise RuntimeError(f"بيانات {symbol} على فريم {tf} غير كافية ({len(df)} شمعة)")
-    ind, c, cost = S.Ind(df), df.close, A.cost(symbol)
+    ind, c = S.Ind(df), df.close
     e20, e50, atr_ = ind.ema(20), ind.ema(50), ind.atr()
     mc, sg = ind.macd()
     hist = mc - sg
@@ -51,11 +54,19 @@ def _tf_view(symbol, tf, items):
     v = {"tf": tf, "ex": ex, "df": df, "ind": ind, "price": float(c.iloc[-1]), "atr": float(atr_.iloc[-1]),
          "ema20": float(e20.iloc[-1]), "ema50": float(e50.iloc[-1]), "rsi": round(float(ind.rsi().iloc[-1]), 1),
          "adx": round(float(ind.adx().iloc[-1]), 1), "hist": float(hist.iloc[-1]), "hist_prev": float(hist.iloc[-2]),
+         "pdi": float(pdi.iloc[-1]), "mdi": float(mdi.iloc[-1]),
          "reg": S.regime(df, ind), "hh20": float(df.high.tail(20).max()), "sw_low": float(df.low.tail(12).min()),
-         "sw_high": float(df.high.tail(12).max()), "e20s": e20, "e50s": e50}
+         "sw_high": float(df.high.tail(12).max()), "e20s": e20, "e50s": e50,
+         "strats": [], "trades": {}, "buy": 0.0, "sell": 0.0}
     up = v["ema20"] > v["ema50"] and v["price"] > v["ema50"]
     dn = v["ema20"] < v["ema50"] and v["price"] < v["ema50"]
     v["trend"] = "up" if up else "down" if dn else "flat"
+    return v
+
+
+def _tf_score(v, symbol, items):
+    """مرحلة 2: تقييم الاستراتيجيات ودرجتا الشراء/البيع للفريم (0-100). items=[] يعني بلا استراتيجيات."""
+    df, ind, cost = v["df"], v["ind"], A.cost(symbol)
     strats, trades = [], {}
     for it in items:
         ev = S.evaluate(it, df, ind, cost)
@@ -66,7 +77,6 @@ def _tf_view(symbol, tf, items):
         strats.append({"id": it["id"], "name": it["name"], "origin": it["origin"], "exits": it["exits"], "signal": sig,
                        "stats": st, "passed": S.asset_pass(st), "bars": len(df)})
     v["strats"], v["trades"] = strats, trades
-    # درجات الشراء/البيع لهذا الفريم (0-100)
     b = s = 0.0
     if v["trend"] == "up":
         b += 30
@@ -84,7 +94,7 @@ def _tf_view(symbol, tf, items):
     b += 10 if 45 <= r <= 68 else 8 if r < 30 else 0
     s += 10 if 32 <= r <= 55 else 8 if r > 70 else 0
     if v["adx"] >= 22:
-        if float(pdi.iloc[-1]) > float(mdi.iloc[-1]):
+        if v["pdi"] > v["mdi"]:
             b += 10
         else:
             s += 10
@@ -94,10 +104,10 @@ def _tf_view(symbol, tf, items):
     return v
 
 
-def _gather(symbol, style):
+def _gather_base(symbol, style):
+    """البيانات والمؤشرات لكل الفريمات + نموذج السوق + السعر الحي + هل السوق مغلق. لا استراتيجيات هنا."""
     cfg, kind_ = MODES[style], A.kind(symbol)
-    items = lab.active_items()
-    views = {tf: _tf_view(symbol, tf, items) for tf in cfg["tfs"]}
+    views = {tf: _tf_base(symbol, tf) for tf in cfg["tfs"]}
     ev = views[cfg["entry"]]
     market_model = MM.analyze_market(ev["df"])
     price, chg = m.quote(symbol)
@@ -107,7 +117,19 @@ def _gather(symbol, style):
         bpd = int(86_400_000 / m.TF_MS[cfg["entry"]])
         cl = ev["df"].close
         chg = (ev["price"] / float(cl.iloc[-1 - bpd]) - 1) * 100 if len(cl) > bpd else 0.0
-    # تجميع الاتجاه عبر الفريمات
+    lts = float(low["df"]["ts"].iloc[-1])
+    closed = kind_ != "crypto" and (time.time() * 1000 - lts) > 8 * m.TF_MS[cfg["tfs"][0]]
+    return {"closed": closed, "cfg": cfg, "views": views, "ev": ev, "market_model": market_model, "price": price,
+            "chg": round(float(chg), 2), "buy": 0.0, "sell": 0.0, "why": [], "kind": kind_, "n_lib": 0}
+
+
+def _score(g, symbol, style, ctx=None, items=None):
+    """مرحلة 2 (بعد فهم السياق): تقييم الاستراتيجيات ودرجتا الشراء/البيع، مع تعديل السياق.
+    items=[] يتخطى الاستراتيجيات (عندما يقول السياق «لا تدخل»)."""
+    cfg, views, ev, market_model = g["cfg"], g["views"], g["ev"], g["market_model"]
+    items = lab.active_items() if items is None else items
+    for v in views.values():
+        _tf_score(v, symbol, items)
     buy = sum(cfg["w"][tf] * views[tf]["buy"] for tf in cfg["tfs"])
     sell = sum(cfg["w"][tf] * views[tf]["sell"] for tf in cfg["tfs"])
     # طبقة مستقلة لهيكل السوق وتدفق الحجم وVWAP. أثر ML محدود ولا يُستخدم إلا إذا تفوق خارج العينة على baseline.
@@ -132,17 +154,16 @@ def _gather(symbol, style):
         sell -= 15; why.append(f"الفريم الأكبر ({top['tf']}) صاعد — عكس البيع (-15)")
     if ev["reg"]["state"] == "high_vol":
         buy -= 20; sell -= 20; why.append("تذبذب شديد على فريم الدخول (-20 للطرفين)")
-    if style == "swing":                                   # علاقات الأصول المكتشفة (تقدم/تأخر يومي)
-        try:
-            rel = brain.relation_signal(symbol)
-            buy, sell, why = buy + rel["buy"], sell + rel["sell"], why + rel["notes"]
-        except Exception:  # noqa: BLE001
-            pass
-    lts = float(low["df"]["ts"].iloc[-1])
-    closed = kind_ != "crypto" and (time.time() * 1000 - lts) > 8 * m.TF_MS[cfg["tfs"][0]]
-    buy, sell = max(0.0, min(100.0, buy)), max(0.0, min(100.0, sell))
-    return {"closed": closed, "cfg": cfg, "views": views, "ev": ev, "market_model": market_model, "price": price, "chg": round(float(chg), 2), "buy": buy, "sell": sell,
-            "why": why, "kind": A.kind(symbol), "n_lib": len(items)}
+    if ctx and ctx.get("adjust"):                          # السياق يرجّح كفة الاتجاه المسموح (علاقات الأصول داخلة فيه)
+        buy += ctx["adjust"]; sell -= ctx["adjust"]
+        why.append(f"السياق {ctx['bias_label']} (قوة {ctx['strength']}/100): {ctx['adjust']:+.1f} على الشراء و{-ctx['adjust']:+.1f} على البيع")
+    g.update(buy=max(0.0, min(100.0, buy)), sell=max(0.0, min(100.0, sell)), why=why, n_lib=len(items))
+    return g
+
+
+def _gather(symbol, style):
+    """توافق مع أدوات CrewAI: بيانات + استراتيجيات بلا سياق."""
+    return _score(_gather_base(symbol, style), symbol, style)
 
 
 def _side_hist(g, side):
@@ -178,13 +199,31 @@ def _strat_text(g, style):
 
 def describe_market(symbol, style="swing"):          # تستعملها أدوات CrewAI
     symbol = A.normalize(symbol)
-    g = _gather(symbol, style)
+    g = _gather_base(symbol, style)
     return _price_text(symbol, g, m.fear_greed(), m.funding_rate(symbol))
 
 
 def describe_strategies(symbol, style="swing"):
     symbol = A.normalize(symbol)
     return _strat_text(_gather(symbol, style), style)
+
+
+def _context_text(ctx):
+    lines = [ctx["headline"], "", f"الإذن: {ctx['permission_label']}", "المخاطرة: " + ("عادية" if ctx["risk_factor"] >= 1 else "مخفضة 50%"), ""]
+    return "\n".join(lines + [f"• {n}" for n in ctx["notes"]])
+
+
+def describe_context(symbol, style="swing"):
+    symbol = A.normalize(symbol)
+    g = _gather_base(symbol, style)
+    rel = None
+    if style == "swing":
+        try:
+            rel = brain.relation_signal(symbol)
+        except Exception:  # noqa: BLE001
+            rel = None
+    ctx = CX.build(symbol, style, g["views"], g["cfg"]["entry"], g["market_model"], g["closed"], 0, m.fear_greed(), None, rel, g["kind"])
+    return _context_text(ctx)
 
 
 def _chart(v, n=100):
@@ -210,12 +249,14 @@ def _levels(side, v, cfg, best):
             "take_profit2": A.rp(p + sd * r2 * dist), "entry_limit": limit, "entry_type": "MARKET", "rr": round(r1, 2), "dist": dist}
 
 
-def analyze(symbol, capital, style="swing", emit=_noop, light=False):
-    """light=True: مسح سريع بدون أخبار ولا معدل التمويل."""
+
+def analyze(symbol, capital, style="swing", emit=_noop, light=False, on_context=None):
+    """التسلسل: بيانات + أخبار ← فهم السياق (يحدد المسموح) ← بحث الصفقات داخل المسموح ← مخاطر ← قرار.
+    light=True: مسح سريع بدون أخبار ولا Grok ولا تدفق أوامر. إن قال السياق «لا تدخل» تُتخطى الاستراتيجيات كلياً."""
     symbol = A.normalize(symbol)
     style = style if style in MODES else "swing"
     emit("price", "running", "")
-    g = _gather(symbol, style)
+    g = _gather_base(symbol, style)
     cfg, ev, kind = g["cfg"], g["ev"], g["kind"]
     fng = m.fear_greed() if kind == "crypto" else None
     fund = None if light else m.funding_rate(symbol)
@@ -244,12 +285,42 @@ def analyze(symbol, capital, style="swing", emit=_noop, light=False):
         news_lines += ["", "💡 أضف مفتاح xAI (Grok) في الإعدادات لقراءة منصة X مباشرة."]
     emit("news", "done", "\n".join(news_lines))
 
-    emit("strategist", "running", "")
-    lib = lab.summary()
-    act = [f"• {tf}: " + ("، ".join(f"{'📈' if s['signal'] == 'BUY' else '📉'} {s['name']}" for s in v["strats"] if s["signal"] and s["passed"]) or "لا إشارات مؤكدة")
-           for tf, v in g["views"].items()]
-    emit("strategist", "done", f"مخزون الاستراتيجيات: {lib['total']} ({lib['active']} نشطة، {lib['generated']} مولّدة بالبحث، {lib.get('tested', 0)} فكرة اختُبرت)\n"
-         f"آخر بحث: {(lib.get('last_run') or 'لم يُجرَ بعد').replace('T', ' ')}\nالإشارات الحالية المؤكدة (اجتازت اختباراً على هذا الأصل):\n" + "\n".join(act))
+    # ================= الخطوة الأهم: فهم السياق قبل أي صفقة =================
+    emit("context", "running", "")
+    flow = None
+    if kind == "crypto" and not light and os.getenv("CONTEXT_ORDERFLOW", "1") != "0":
+        try:
+            import orderflow
+            flow = orderflow.analyze(symbol)
+        except Exception:  # noqa: BLE001
+            flow = None
+    rel = None
+    if style == "swing":                                   # علاقات الأصول المكتشفة (تقدم/تأخر يومي) تدخل في السياق لا في الصفقة
+        try:
+            rel = brain.relation_signal(symbol)
+        except Exception:  # noqa: BLE001
+            rel = None
+    ctx = CX.build(symbol, style, g["views"], cfg["entry"], g["market_model"], g["closed"], sent, fng, flow, rel, kind)
+    if rel and rel.get("notes"):
+        ctx["notes"] += rel["notes"]
+    emit("context", "done", _context_text(ctx))
+    if on_context:
+        on_context(ctx)                                    # تعرضه الواجهة فوراً قبل أن تنتهي بقية الخطوات
+    stand_aside = ctx["permission"] == "wait"
+
+    # ================= ثم البحث عن الصفقات داخل المسموح فقط =================
+    if stand_aside:
+        skip = "تم التخطي — " + ctx["headline"]
+        emit("strategist", "skipped", skip)
+        _score(g, symbol, style, ctx, items=[])            # مؤشرات فقط (بلا اختبار استراتيجيات) لعرض الميزان والشارت
+    else:
+        emit("strategist", "running", "")
+        _score(g, symbol, style, ctx)
+        lib = lab.summary()
+        act = [f"• {tf}: " + ("، ".join(f"{'📈' if s['signal'] == 'BUY' else '📉'} {s['name']}" for s in v["strats"] if s["signal"] and s["passed"]) or "لا إشارات مؤكدة")
+               for tf, v in g["views"].items()]
+        emit("strategist", "done", f"مخزون الاستراتيجيات: {lib['total']} ({lib['active']} نشطة، {lib['generated']} مولّدة بالبحث، {lib.get('tested', 0)} فكرة اختُبرت)\n"
+             f"آخر بحث: {(lib.get('last_run') or 'لم يُجرَ بعد').replace('T', ' ')}\nالإشارات الحالية المؤكدة (اجتازت اختباراً على هذا الأصل):\n" + "\n".join(act))
 
     emit("hunter", "running", "")
     buy, sell = g["buy"], g["sell"]
@@ -263,11 +334,13 @@ def analyze(symbol, capital, style="swing", emit=_noop, light=False):
     confirm = [s for s in ev["strats"] if s["signal"] == side and s["passed"]]
     best = max(confirm, key=lambda s: s["stats"]["avg_r"]) if confirm else None
     hist = {"BUY": _side_hist(g, "BUY"), "SELL": _side_hist(g, "SELL")}
+    blocked = CX.block_reason(ctx, side, grade) if (grade != "-" and clear) else None   # هل يمنع السياق هذا الاتجاه؟
     plan, action = None, "WAIT"
-    if grade != "-" and clear:
+    if grade != "-" and clear and not blocked:
         action = side
         lv = _levels(side, ev, cfg, best)
-        ps = m.position_size(capital, ev["price"], lv["stop_loss"], cap=(kind in ("crypto", "stock") and side == "BUY"))
+        rf = ctx["risk_factor"]
+        ps = m.position_size(capital, ev["price"], lv["stop_loss"], risk_pct=2.0 * rf, cap=(kind in ("crypto", "stock") and side == "BUY"))
         h = hist[side]
         wr = round(100 * (h["n"] * h["win_rate"] / 100 + 0.4 * 10) / (h["n"] + 10), 1) if h["n"] else None
         if wr is not None:
@@ -276,10 +349,10 @@ def analyze(symbol, capital, style="swing", emit=_noop, light=False):
         confirmed_tfs = [tf for tf, v in g["views"].items() if v["trend"] == ("up" if side == "BUY" else "down")]
         plan = {"action": side, "symbol": symbol, "mode": style, "entry_tf": cfg["entry"], "confirmed_tfs": confirmed_tfs,
                 **{k: lv[k] for k in ("entry", "stop_loss", "take_profit", "take_profit2", "entry_limit", "entry_type", "rr")},
-                "size_usd": ps["size_usd"], "risk_usd": ps["risk_usd"], "leverage": ps["leverage"], "grade": grade, "grade_label": glabel,
+                "size_usd": ps["size_usd"], "risk_usd": ps["risk_usd"], "leverage": ps["leverage"], "risk_pct": round(2.0 * rf, 2), "grade": grade, "grade_label": glabel,
                 "score": round(top), "strategy": [s["name"] for s in confirm], "win_rate_est": wr, "win_n": h["n"], "cost_r": cost_r,
-                "track": cfg["track"], "expire_ms": cfg["expire_h"] * 3_600_000}
-    why = list(g["why"])
+                "track": cfg["track"], "expire_ms": cfg["expire_h"] * 3_600_000, "context_bias": ctx["bias"]}
+    why = [f"السياق: {ctx['headline']}"] + list(g["why"])
     mm = g.get("market_model", {})
     if mm.get("available"):
         why.append(f"خوارزمية بنية السوق: {mm['structure']} | النظام: {mm['regime']} | CHOP {mm['choppiness']} | ER {mm['efficiency_ratio']}")
@@ -290,28 +363,39 @@ def analyze(symbol, capital, style="swing", emit=_noop, light=False):
     for tf, v in g["views"].items():
         why.append(f"{tf}: {TREND_AR[v['trend']]} — شراء {round(v['buy'])} / بيع {round(v['sell'])}")
     hunter = [f"الوضع: {cfg['label']} | فريم الدخول {cfg['entry']} | الفريمات المختبرة: {'، '.join(cfg['tfs'])}",
+              f"السياق: {ctx['permission_label']}",
               f"قوة الاتجاه: شراء {buy_pct}% ({round(buy)}/100) مقابل بيع {sell_pct}% ({round(sell)}/100)",
               "الأعلى: " + (SIDE_AR[side] + f" — {glabel}" if grade != "-" else "لا أحد يتجاوز 40/100")]
+    if stand_aside:
+        hunter.append("⛔ لم يُبحث عن صفقات: السياق لا يسمح بالدخول.")
+    if blocked and not stand_aside:
+        hunter.append(f"⛔ السياق يمنع هذه الصفقة: {blocked}")
     if not clear and grade != "-":
         hunter.append("⚠️ الفارق بين الشراء والبيع أقل من 12 نقطة — إشارات متعارضة → انتظار")
-    for k, lab_ in (("BUY", "شراء"), ("SELL", "بيع")):
-        h = hist[k]
-        hunter.append(f"نجاح تاريخي حديث لاستراتيجيات {lab_} الناجحة: " + (f"{h['win_rate']}% من {h['n']} صفقة (متوسط {h['avg_r']}R)" if h["n"] else "لا بيانات كافية"))
+    if not stand_aside:
+        for k, lab_ in (("BUY", "شراء"), ("SELL", "بيع")):
+            h = hist[k]
+            hunter.append(f"نجاح تاريخي حديث لاستراتيجيات {lab_} الناجحة: " + (f"{h['win_rate']}% من {h['n']} صفقة (متوسط {h['avg_r']}R)" if h["n"] else "لا بيانات كافية"))
     if plan:
         hunter.append(f"\nخطة {SIDE_AR[side]}:\nدخول: {plan['entry']}" + (f" (الأفضل عند {plan['entry_limit']})" if plan["entry_limit"] else "")
                       + f"\nوقف الخسارة: {plan['stop_loss']}\nالهدف 1: {plan['take_profit']} (1:{plan['rr']})\nالهدف 2: {plan['take_profit2']}")
     emit("hunter", "done", "\n".join(hunter))
 
-    emit("simulator", "running", "")
-    emit("simulator", "done", _strat_text(g, style))
-
-    emit("risk", "running", "")
-    if plan:
-        emit("risk", "done", f"رأس المال: ${capital:,.2f}\nحجم الصفقة: ${plan['size_usd']:,.2f}" +
-             (f" (رافعة ≈ {plan['leverage']}×)" if plan["leverage"] > 1 else " (بلا رافعة)") +
-             f"\nالخسارة القصوى عند الوقف: ${plan['risk_usd']:,.2f} (≈ 2%)\nتكلفة التنفيذ التقديرية: {plan['cost_r']}R")
+    if stand_aside:
+        emit("simulator", "skipped", "تم التخطي — لا استراتيجيات اختُبرت لأن السياق لا يسمح بالدخول.")
+        emit("risk", "skipped", f"رأس المال: ${capital:,.2f}\nلا صفقة مقترحة — لا مخاطرة.")
     else:
-        emit("risk", "done", f"رأس المال: ${capital:,.2f}\nلا صفقة مقترحة — لا مخاطرة.")
+        emit("simulator", "running", "")
+        emit("simulator", "done", _strat_text(g, style))
+        emit("risk", "running", "")
+        if plan:
+            emit("risk", "done", f"رأس المال: ${capital:,.2f}\nحجم الصفقة: ${plan['size_usd']:,.2f}" +
+                 (f" (رافعة ≈ {plan['leverage']}×)" if plan["leverage"] > 1 else " (بلا رافعة)") +
+                 f"\nالخسارة القصوى عند الوقف: ${plan['risk_usd']:,.2f} (≈ {plan['risk_pct']:g}%)" +
+                 ("\nالمخاطرة مخفضة 50% لأن السياق ليس قوياً/متوافقاً بما يكفي" if ctx["risk_factor"] < 1 else "") +
+                 f"\nتكلفة التنفيذ التقديرية: {plan['cost_r']}R")
+        else:
+            emit("risk", "done", f"رأس المال: ${capital:,.2f}\nلا صفقة مقترحة — لا مخاطرة.")
 
     emit("ceo", "running", "")
     veto, warn = [], []
@@ -329,6 +413,8 @@ def analyze(symbol, capital, style="swing", emit=_noop, light=False):
         veto.append("الأخبار إيجابية بوضوح — خطر على صفقة البيع")
     if plan and plan["cost_r"] > 0.25:
         veto.append(f"تكلفة التنفيذ مرتفعة ({plan['cost_r']}R) — الوقف قريب جداً من السعر")
+    if plan and ctx["permission"] == "selective":
+        veto.append("السياق محايد — الصفقة بدرجة A لكن بلا اتجاه مسيطر؛ تُعامل كمضاربة بمخاطرة مخفضة")
     if fng and fng["value"] >= 85 and side == "BUY":
         warn.append(f"طمع مفرط ({fng['value']}) — احتمال تصحيح")
     if fng and fng["value"] <= 15 and side == "SELL":
@@ -345,19 +431,20 @@ def analyze(symbol, capital, style="swing", emit=_noop, light=False):
         warn.append("السكالبينج حساس للسبريد والتنفيذ: تحقق أن سبريد وسيطك أقل بكثير من مسافة الوقف.")
     n = best["stats"]["n"] if best else 0
     conf = "جيدة" if n >= 30 else "متوسطة" if n >= 15 else "منخفضة"
-    warn.append(f"العينة الإحصائية لأفضل استراتيجية مؤكدة {n} صفقة — الاختبار على نفس بيانات الأصل (ليس خارج العينة)، فالنتائج تقديرية." if n
-                else "لا توجد استراتيجية مؤكدة — خفّض الحجم أو انتظر.")
+    if not stand_aside:
+        warn.append(f"العينة الإحصائية لأفضل استراتيجية مؤكدة {n} صفقة — الاختبار على نفس بيانات الأصل (ليس خارج العينة)، فالنتائج تقديرية." if n
+                    else "لا توجد استراتيجية مؤكدة — خفّض الحجم أو انتظر.")
     decision = "REJECTED" if (veto or not plan) else "APPROVED"
     if decision == "APPROVED":
-        report = f"اجتازت الفلتر الصارم: {SIDE_AR[side]} بتوافق الفريمات واستراتيجية مؤكدة ({'، '.join(plan['strategy'][:2])})."
+        report = f"اجتازت الفلتر الصارم: {SIDE_AR[side]} داخل سياق {ctx['bias_label']} وبتوافق الفريمات واستراتيجية مؤكدة ({'، '.join(plan['strategy'][:2])})."
     elif plan:
         report = "لم تجتز الفلتر الصارم، وهذه خطة مضاربية:\n" + "\n".join(f"• {v}" for v in veto)
     else:
-        report = "لا تدخل الآن:\n• " + ("إشارات الشراء والبيع متقاربة" if grade != "-" else "قوة الاتجاه ضعيفة") + (
-            "\n• " + veto[0] if veto else "")
+        no = blocked or ("إشارات الشراء والبيع متقاربة" if grade != "-" else "قوة الاتجاه ضعيفة")
+        report = "لا تدخل الآن:\n• " + no + (("\n• " + veto[0]) if veto and veto[0] != no else "")
     report += "\n\nلماذا؟\n" + "\n".join(f"• {w}" for w in why) + "\n\nتنبيهات:\n" + "\n".join(f"⚠️ {w}" for w in warn)
     review = None
-    if not light and grok.available() and os.getenv("GROK_REVIEW", "1") != "0":
+    if not light and grok.available() and os.getenv("GROK_REVIEW", "1") != "0" and not stand_aside:
         try:
             review = grok.second_opinion(symbol, "\n".join(hunter) + "\n" + "\n".join(warn) + "\nالقرار الآلي: " + decision)
             vl = {"agree": "يوافق ✅", "caution": "يوصي بالحذر ⚠️", "disagree": "يعارض ❌"}[review["verdict"]]
@@ -367,6 +454,7 @@ def analyze(symbol, capital, style="swing", emit=_noop, light=False):
     emit("ceo", "done", f"{decision}\n{report}")
     strategies = [{k: v for k, v in s.items()} for s in sorted(ev["strats"], key=lambda x: -x["stats"]["avg_r"])]
     return {"decision": decision, "action": action, "plan": plan, "report": report, "mode": style, "mode_label": cfg["label"],
+            "context": ctx, "blocked_by_context": blocked, "stand_aside": stand_aside,
             "entry_tf": cfg["entry"], "asset_kind": kind, "market_closed": g["closed"], "regime": ev["reg"]["state"], "regime_label": ev["reg"]["label"],
             "confidence": conf, "warnings": warn, "grok": {"pulse": gk, "review": review}, "strategies": strategies, "bars": len(ev["df"]),
             "market_model": g.get("market_model"), "buy_score": round(buy), "sell_score": round(sell), "buy_pct": buy_pct, "sell_pct": sell_pct, "side_hist": hist,
@@ -379,43 +467,50 @@ def analyze(symbol, capital, style="swing", emit=_noop, light=False):
             "adx": ev["adx"], "change": g["chg"], "symbol": symbol}
 
 
-def run_local(symbol, capital, style, on_step):
-    return analyze(symbol, capital, style, on_step)
+def run_local(symbol, capital, style, on_step, on_context=None):
+    return analyze(symbol, capital, style, on_step, on_context=on_context)
 
 
 def scan(symbols, capital, style, on_row):
     for sym in symbols:
         try:
             r = analyze(sym, capital, style, light=True)
+            c = r["context"]
             row = {"symbol": sym, "price": r["price"], "decision": r["decision"], "action": r["action"], "regime_label": r["regime_label"],
                    "change": r["change"], "rsi": r["rsi"], "score": r["score"], "setup_score": r["setup_score"],
-                   "buy_pct": r["buy_pct"], "sell_pct": r["sell_pct"], "grade": r["grade"], "grade_label": r["grade_label"], "plan": r["plan"]}
+                   "buy_pct": r["buy_pct"], "sell_pct": r["sell_pct"], "grade": r["grade"], "grade_label": r["grade_label"], "plan": r["plan"],
+                   "ctx": {"bias": c["bias"], "bias_label": c["bias_label"], "strength": c["strength"], "state_label": c["state_label"],
+                           "permission": c["permission"], "permission_label": c["permission_label"], "headline": c["headline"]}}
         except Exception as e:  # noqa: BLE001
-            row = {"symbol": sym, "error": str(e)[:120], "score": -1}
+            row = {"symbol": sym, "error": str(e)[:160], "score": -1}
         on_row(row)
 
 
 # ---------------------------------------------------------------- وضع الذكاء الاصطناعي (CrewAI + Gemini)
-def run_ai(symbol, capital, style, on_step):
+def run_ai(symbol, capital, style, on_step, on_context=None):
     from crewai import Task, Crew, Process
     from agents.crew_agents import create_trading_team
     from tools import crew_tools
 
     symbol = A.normalize(symbol)
     crew_tools.CURRENT["style"] = style
-    base = analyze(symbol, capital, style)             # حساب هيكلي صامت: الخطة والشارت والأرقام تُحسب بالكود لا بالنموذج
+    base = analyze(symbol, capital, style, on_context=on_context)  # حساب هيكلي صامت: الخطة والشارت والأرقام تُحسب بالكود لا بالنموذج
     coin, t, cfg = symbol, create_trading_team(), MODES[style]
     price = Task(description=f"استعمل أداة الأسعار لـ{symbol} واذكر السعر واتجاه كل فريم وRSI وحالة السوق (وضع: {cfg['label']}).",
                  expected_output="تقرير رقمي موجز متعدد الفريمات.", agent=t["price"])
     news = Task(description=f"استعمل أداة الأخبار لـ{coin} وحدد المزاج: إيجابي / سلبي / محايد (للأصول غير الرقمية اعتمد على التحليل الفني وحذّر من الأخبار الاقتصادية).",
                 expected_output="ملخص الأخبار وتقييم التأثير.", agent=t["news"])
+    cx = base["context"]
+    ctx_t = Task(description=f"استعمل أداة فهم السياق لـ{symbol} (وضع: {cfg['label']}) وحدّد: حالة السوق (اتجاهي/عرضي/متذبذب)، الميل (صاعد/هابط/محايد)، وما المسموح (شراء فقط / بيع فقط / انتقائي / لا تدخل). "
+                             f"هذا أول قرار في الشركة: لا يبحث أحد عن صفقة قبل أن تحدد ما المسموح. الحكم الحسابي المرجعي: {cx['headline']} ({cx['permission_label']}). لا تتجاوزه إلا بسبب موثّق.",
+                 expected_output="ملخص السياق والإذن (شراء فقط / بيع فقط / انتقائي / لا تدخل) مع الأسباب.", agent=t["context"], context=[price, news])
     strat = Task(description=f"استعمل أدوات المخزون: اعرض المخزون، وطبّقه على {symbol} لمعرفة الإشارات الحالية (شراء/بيع) وجودتها. "
                              "ثم اقترح استراتيجية جديدة واحدة مختلفة عن الموجودة وأنشئها بأداة الإنشاء (تُختبر تلقائياً ولا تدخل إلا إن نجحت). "
                              "قل بصدق إن رُفضت.", expected_output="الإشارات الحالية وجودتها ونتيجة الاستراتيجية الجديدة.",
-                 agent=t["strategist"], context=[price])
+                 agent=t["strategist"], context=[ctx_t])
     hunter = Task(description=f"بناءً على التقارير اقترح لـ{symbol} إما BUY أو SELL أو WAIT مع سعر الدخول وTake Profit وStop Loss بأرقام دقيقة "
-                              "(الوقف بين 1 و2.5×ATR). لا تعاكس الفريم الأكبر إلا بسبب قوي. القرار الحسابي المرجعي من المحرك:\n" + base["report"][:900],
-                  expected_output="خطة الصفقة بالأرقام.", agent=t["hunter"], context=[price, news, strat])
+                              "(الوقف بين 1 و2.5×ATR). لا تعاكس الفريم الأكبر ولا إذن السياق (ممنوع الشراء في سياق هابط والبيع في سياق صاعد؛ وإن كان الإذن «لا تدخل» فالقرار WAIT). القرار الحسابي المرجعي من المحرك:\n" + base["report"][:900],
+                  expected_output="خطة الصفقة بالأرقام.", agent=t["hunter"], context=[price, news, ctx_t, strat])
     sim = Task(description=f"شغّل أداة الاختبار التاريخي على {symbol} وفسّر أي الاستراتيجيات اجتازت وهل تتفوق، واذكر أن العينة صغيرة إن كانت الصفقات قليلة.",
                expected_output="نتائج المحاكاة وتقييم صادق لموثوقيتها.", agent=t["simulator"], context=[hunter])
     risk = Task(description=f"رأس المال {capital}$. استعمل حاسبة الحجم (لا تحسب يدوياً) بسعر الدخول ووقف الخسارة المقترحين، ثم قيّم المخاطر.",
@@ -423,7 +518,7 @@ def run_ai(symbol, capital, style, on_step):
     ceo = Task(description=f"راجع كل التقارير لـ{symbol} واتخذ القرار النهائي. ارفض إذا كان التذبذب شديداً أو لم تؤكد استراتيجية ناجحة الاتجاه. "
                            "ابدأ ردك بكلمة واحدة فقط: APPROVED أو REJECTED، ثم اشرح بالعربية مع نقاط الدخول والخروج واتجاه الصفقة (شراء/بيع)، واذكر مستوى الثقة بصدق.",
                expected_output="APPROVED أو REJECTED في السطر الأول ثم التفاصيل.", agent=t["ceo"],
-               context=[price, news, strat, hunter, sim, risk])
+               context=[price, news, ctx_t, strat, hunter, sim, risk])
     done = []
 
     def cb(out):
@@ -434,13 +529,16 @@ def run_ai(symbol, capital, style, on_step):
             on_step(KEYS[i + 1], "running", "")
 
     on_step("price", "running", "")
-    crew = Crew(agents=list(t.values()), tasks=[price, news, strat, hunter, sim, risk, ceo],
+    crew = Crew(agents=list(t.values()), tasks=[price, news, ctx_t, strat, hunter, sim, risk, ceo],
                 process=Process.sequential, task_callback=cb, verbose=True)
     result = str(crew.kickoff())
-    return {**base, "decision": parse_decision(result), "report": result + "\n\n— الحساب الآلي المرجعي —\n" + base["report"]}
+    decision = parse_decision(result)
+    if base["plan"] is None:                           # النموذج لا يستطيع الموافقة على صفقة منعها الكود/السياق
+        decision = "REJECTED"
+    return {**base, "decision": decision, "report": result + "\n\n— الحساب الآلي المرجعي —\n" + base["report"]}
 
 
-def run_analysis(symbol, capital, mode, style, on_step):
+def run_analysis(symbol, capital, mode, style, on_step, on_context=None):
     if mode == "ai":
         if not (os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")):
             raise RuntimeError("أضف مفتاح Google Gemini من تبويب الإعدادات أولاً (أو اختر الوضع المحلي المجاني).")
@@ -448,5 +546,5 @@ def run_analysis(symbol, capital, mode, style, on_step):
             import crewai  # noqa: F401
         except ImportError:
             raise RuntimeError("مكتبة crewai غير مثبتة. نفّذ: pip install -r requirements-ai.txt")
-        return run_ai(symbol, capital, style, on_step)
-    return run_local(symbol, capital, style, on_step)
+        return run_ai(symbol, capital, style, on_step, on_context)
+    return run_local(symbol, capital, style, on_step, on_context)

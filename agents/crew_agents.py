@@ -1,7 +1,7 @@
 import os
 from crewai import Agent, LLM
 from tools.crew_tools import (fetch_price_and_technicals, fetch_crypto_news, run_backtest_simulation,
-                              calculate_position_size, list_strategy_library, create_new_strategy, grok_x_pulse)
+                              calculate_position_size, list_strategy_library, create_new_strategy, grok_x_pulse, market_context)
 
 
 def create_trading_team():
@@ -28,6 +28,9 @@ def create_trading_team():
         "news": agent("محلل الأخبار ومشاعر السوق (News Scout)",
                       "جمع أحدث الأخبار وتحديد ما إذا كانت تدعم الصعود أم الهبوط.",
                       "محلل مالي متخصص في رصد الأخبار العاجلة وتأثيرها على المتداولين.", worker, [fetch_crypto_news, grok_x_pulse]),
+        "context": agent("فاهم السياق (Context Analyst)",
+                         "فهم حالة السوق (اتجاهي/عرضي/متذبذب) وميله، وتحديد ما المسموح: شراء فقط، بيع فقط، انتقائي، أو لا تدخل — قبل أن يبحث أي موظف عن صفقة.",
+                         "محلل هيكل سوق يرى الصورة الكبرى أولاً: الفريمات الكبيرة، السيولة، التقلب، المزاج. لا يسمح بصفقة تعاكس السياق.", worker, [market_context]),
         "strategist": agent("باحث الاستراتيجيات (Strategy Researcher)",
                             "إدارة مخزون الاستراتيجيات: تطبيقها على الأصل الحالي، واقتراح وإنشاء استراتيجيات جديدة تُختبر بصرامة قبل قبولها.",
                             "باحث كمّي يشكّ في كل فكرة ولا يقبلها إلا بعد اختبار على عدة أصول وفريمات، ويعترف بصدق عندما ترفضها البوابة.",

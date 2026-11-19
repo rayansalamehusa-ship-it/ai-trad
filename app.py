@@ -2,6 +2,10 @@
 import os, socket, sys, threading, time, uuid, webbrowser
 from datetime import datetime
 from pathlib import Path
+
+import deps
+deps.ensure()                      # يثبّت أي مكتبة ناقصة (yfinance, ccxt, flask…) بنفس مفسّر بايثون قبل أي استيراد آخر
+
 from dotenv import load_dotenv, set_key
 from flask import Flask, jsonify, request, send_from_directory
 
@@ -60,7 +64,15 @@ def status():
                    watchlist=",".join(x.split("/")[0] for x in watchlist()), auto_min=int(num("AUTO_SCAN_MIN", 0)),
                    capital=num("AUTO_CAPITAL", 1000), tg_chat=os.getenv("TELEGRAM_CHAT_ID", ""),
                    auto_mode=os.getenv("AUTO_MODE", "swing"), lab_hours=int(num("LAB_AUTO_HOURS", 0)), lab=lab.summary(), brain=brain.summary(), assets=A.groups(),
-                   steps=[{"key": k, "name": n, "en": e} for k, n, e in engine.STEPS])
+                   deps=deps.report(), steps=[{"key": k, "name": n, "en": e} for k, n, e in engine.STEPS])
+
+
+@app.post("/api/deps/install")
+def deps_install():
+    """زر «ثبّت المكتبات الناقصة» في الواجهة."""
+    todo = deps.missing()
+    ok, err = deps.install(todo, quiet=True) if todo else (True, "")
+    return jsonify(ok=ok, error=err, **deps.report())
 
 
 @app.post("/api/settings")
@@ -115,7 +127,7 @@ def run():
     style = style_of(d.get("style"))
     jid = uuid.uuid4().hex[:8]
     job = {"id": jid, "type": "run", "status": "running", "symbol": symbol, "capital": capital, "mode": mode, "style": style,
-           "steps": {k: {"state": "wait", "text": ""} for k in engine.KEYS}, "result": None, "error": None}
+           "steps": {k: {"state": "wait", "text": ""} for k in engine.KEYS}, "context": None, "result": None, "error": None}
     jobs[jid] = job
 
     def on_step(key, state, text):
@@ -124,7 +136,7 @@ def run():
 
     def work():
         try:
-            job["result"] = engine.run_analysis(symbol, capital, mode, style, on_step)
+            job["result"] = engine.run_analysis(symbol, capital, mode, style, on_step, lambda c: job.__setitem__("context", c))
             job["result"]["mt5_execution"] = mt5_demo.maybe_execute(job["result"])
             job["status"] = "done"
             tracker.add(tracker.make_entry(symbol, capital, mode, job["result"]))
@@ -465,7 +477,7 @@ if __name__ == "__main__":
             sys.exit(0)
     try:
         import webview
-        webview.create_window("AI Trading Firm", url, width=440, height=900, min_size=(380, 640))
+        webview.create_window("AI Trading Firm", url, width=1280, height=860, min_size=(760, 560))
         webview.start()
     except Exception:  # noqa: BLE001
         print(f"\nافتح التطبيق في المتصفح:  {url}\n(للإغلاق اضغط Ctrl+C)")

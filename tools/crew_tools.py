@@ -75,3 +75,13 @@ def grok_x_pulse(symbol: str) -> str:
         return grok.pulse_text(grok.x_pulse(sym, A.kind(sym)))
     except Exception as e:  # noqa: BLE001
         return f"تعذر جلب نبض X: {e}"
+
+
+@tool("Market Context Analysis")
+def market_context(symbol: str) -> str:
+    """يحدد سياق السوق لأصل (BTC/USDT, XAU/USD, EUR/USD…): الحالة، الميل، وما المسموح (شراء فقط/بيع فقط/انتقائي/لا تدخل)."""
+    from engine import describe_context
+    try:
+        return describe_context(symbol, CURRENT["style"])
+    except Exception as e:  # noqa: BLE001
+        return f"خطأ في فهم السياق: {e}"

@@ -73,7 +73,7 @@ for style in ("swing", "scalp"):
     for sym in ("BTC/USDT", "XAU/USD", "EUR/USD", "USD/JPY", "NVDA"):
         steps = {}
         r = engine.analyze(sym, 1000, style, lambda k, s, t: steps.__setitem__(k, s))
-        ok = set(steps) == set(engine.KEYS) and all(v == "done" for v in steps.values())
+        ok = set(steps) == set(engine.KEYS) and all(v in ("done", "skipped") for v in steps.values())
         check(f"analyze {style} {sym}: {r['action']} {r['grade']} buy{r['buy_pct']}/sell{r['sell_pct']}", ok and r["action"] in ("BUY", "SELL", "WAIT") and r["buy_pct"] + r["sell_pct"] == 100)
         json.dumps(r)    # يجب أن تكون النتيجة قابلة للتحويل إلى JSON
         if r["plan"]:

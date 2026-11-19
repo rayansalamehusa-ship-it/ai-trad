@@ -11,7 +11,7 @@ KN = Path(__file__).resolve().parent.parent / "data" / "knowledge.json"
 RELATION_UNIVERSE = ["BTC/USDT", "ETH/USDT", "SOL/USDT", "XAU/USD", "XAG/USD", "DXY", "EUR/USD", "USD/JPY", "GBP/USD", "SPY", "QQQ",
                      "AAPL", "MSFT", "NVDA", "GOOGL", "AMZN", "META", "TSLA", "AVGO", "JPM", "XOM"]
 _lock, _run = threading.Lock(), threading.Lock()
-EMPTY = {"relations": [], "log": [], "calibration": None, "cycles": 0, "last_cycle": None, "rel_tests": 0}
+EMPTY = {"relations": [], "log": [], "calibration": None, "paper_feedback": None, "cycles": 0, "last_cycle": None, "rel_tests": 0}
 
 
 def load():
@@ -144,8 +144,43 @@ def relation_signal(symbol):
 
 
 # ---------------------------------------------------------------- التعلم من الصفقات الحية
+def _paper_feedback():
+    """إحصاءات نتائج المحفظة الورقية؛ لا تنسب الصفقات لاستراتيجيات لغياب بيانات المصدر."""
+    import paper_trading
+
+    account = paper_trading.load()
+    trades = account.get("closed_trades", []) if isinstance(account, dict) else []
+    valid, skipped = [], 0
+    for trade in trades:
+        try:
+            pnl = float(trade["realized_pnl"])
+            risk = float(trade["risk_cash"])
+            if not np.isfinite(pnl) or not np.isfinite(risk) or risk <= 0:
+                skipped += 1
+                continue
+            valid.append((pnl, pnl / risk))
+        except (KeyError, TypeError, ValueError):
+            skipped += 1
+
+    rs = [r for _, r in valid]
+    pnls = [p for p, _ in valid]
+    wins = sum(r > 0 for r in rs)
+    losses = sum(r < 0 for r in rs)
+    breakeven = len(rs) - wins - losses
+    return {
+        "resolved": len(valid),
+        "skipped": skipped,
+        "wins": wins,
+        "losses": losses,
+        "breakeven": breakeven,
+        "win_rate": round(100 * wins / len(valid), 1) if valid else None,
+        "avg_r": round(float(np.mean(rs)), 3) if rs else None,
+        "net_pnl": round(float(sum(pnls)), 2),
+    }
+
+
 def live_feedback():
-    """يوقف الاستراتيجية التي خسرت فعلياً (≥12 صفقة محسومة ومتوسط < -0.15R) ويعاير نسب النجاح المعروضة بعد ≥20 صفقة."""
+    """يتعلم من سجل الإشارات، ويعرض إحصاءات منفصلة للمحفظة الورقية دون تخمين الاستراتيجية."""
     import tracker
     res = [e for e in tracker.load() if e.get("plan") and e.get("status") in ("tp", "sl") and e.get("r") is not None]
     by = {}
@@ -160,12 +195,15 @@ def live_feedback():
             retired.append(it["name"])
     if retired:
         lab.save(lib)
-    kn, pairs = load(), [(e["plan"]["win_rate_est"], e["status"] == "tp") for e in res if e["plan"].get("win_rate_est") is not None]
+    kn = load()
+    pairs = [(e["plan"]["win_rate_est"], e["status"] == "tp") for e in res if e["plan"].get("win_rate_est") is not None]
     if len(pairs) >= 20:
         est, act = float(np.mean([p[0] for p in pairs])), 100 * float(np.mean([p[1] for p in pairs]))
         kn["calibration"] = {"n": len(pairs), "est": round(est, 1), "actual": round(act, 1), "factor": round(max(0.6, min(1.2, act / est)), 2) if est else 1.0}
-        save(kn)
-    return {"resolved": len(res), "retired": retired, "calibration": kn["calibration"]}
+    paper = _paper_feedback()
+    kn["paper_feedback"] = paper
+    save(kn)
+    return {"resolved": len(res), "retired": retired, "calibration": kn["calibration"], "paper": paper}
 
 
 def calibration_factor():
@@ -187,7 +225,8 @@ def cycle(on_progress=lambda msg, pct: None, use_llm=False, n=40):
         entry = {"time": datetime.now().isoformat(timespec="seconds"), "relations_added": [relation_text(r) for r in rel["added"][:6]],
                  "relations_total": rel["total"], "relations_dropped": rel["dropped"], "rel_tests": rel["tests"],
                  "strategies_added": lr["added"], "strategies_retired": lr["retired"], "strategies_tested": lr["tested"],
-                 "live_retired": fb["retired"], "live_resolved": fb["resolved"]}
+                 "live_retired": fb["retired"], "live_resolved": fb["resolved"],
+                 "paper_resolved": fb["paper"]["resolved"], "paper_avg_r": fb["paper"]["avg_r"]}
         kn["log"] = ([entry] + kn["log"])[:30]
         kn["cycles"] += 1
         kn["last_cycle"] = entry["time"]
@@ -208,6 +247,8 @@ def report_text(e):
     if e["relations_added"]:
         L.append("🔗 علاقات جديدة:\n" + "\n".join("• " + t for t in e["relations_added"][:3]))
     L.append(f"إجمالي العلاقات المقبولة الآن: {e['relations_total']}")
+    if e.get("paper_resolved", 0):
+        L.append(f"📒 المحفظة الورقية: {e['paper_resolved']} صفقة محسومة · متوسط {e['paper_avg_r']:+.2f}R" if e.get("paper_avg_r") is not None else f"📒 المحفظة الورقية: {e['paper_resolved']} صفقة محسومة")
     return "\n".join(L)
 
 

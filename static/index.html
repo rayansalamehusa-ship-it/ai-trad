@@ -2,481 +2,196 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>شركة التداول الذكية</title>
-<style>
-:root{--bg:#f2f2f7;--card:#fff;--label:#000;--label2:#6c6c70;--sep:rgba(60,60,67,.18);--blue:#007aff;--green:#34c759;--red:#ff3b30;--orange:#ff9500;--fill:rgba(118,118,128,.12);--bar:rgba(249,249,249,.82);--wall:linear-gradient(160deg,#c9d6ff,#e2e2e2)}
-@media(prefers-color-scheme:dark){:root{--bg:#000;--card:#1c1c1e;--label:#fff;--label2:#98989f;--sep:rgba(84,84,88,.6);--blue:#0a84ff;--green:#30d158;--red:#ff453a;--orange:#ff9f0a;--fill:rgba(118,118,128,.24);--bar:rgba(29,29,30,.82);--wall:linear-gradient(160deg,#1a1a2e,#0b0b10)}}
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{height:100%;margin:0}
-body{font:17px/1.35 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI","Noto Sans Arabic",Tahoma,sans-serif;color:var(--label);background:var(--wall);display:flex;align-items:center;justify-content:center}
-.phone{position:relative;width:100%;height:100%;background:var(--bg);overflow:hidden;display:flex;flex-direction:column}
-.island,.sb{display:none}
-@media(min-width:520px) and (min-height:760px){
- .phone{width:402px;height:min(874px,96vh);border-radius:56px;border:11px solid #111;box-shadow:0 30px 80px rgba(0,0,0,.35),0 0 0 2px #444}
- .island{display:block;position:absolute;top:11px;left:50%;transform:translateX(-50%);width:112px;height:32px;background:#000;border-radius:20px;z-index:40}
- .sb{display:flex;justify-content:space-between;padding:16px 34px 0;font-weight:600;font-size:15px;height:54px;direction:ltr;flex:none}
-}
-.pages{flex:1;overflow-y:auto;overflow-x:hidden;padding:0 16px 110px;scrollbar-width:none}
-.pages::-webkit-scrollbar{display:none}
-.page{display:none}.page.on{display:block;animation:in .25s ease}
-@keyframes in{from{opacity:0;transform:translateY(8px)}to{opacity:1}}
-h1{font-size:34px;font-weight:700;margin:14px 4px 12px;letter-spacing:-.4px}
-.hd{font-size:13px;color:var(--label2);margin:22px 16px 7px}
-.ft{font-size:13px;color:var(--label2);margin:7px 16px 0}
-.group{background:var(--card);border-radius:12px;overflow:hidden}
-.row{display:flex;align-items:center;gap:12px;min-height:44px;padding:10px 16px;position:relative}
-.row+.row::before,.row+.out+.row::before{content:"";position:absolute;top:0;inset-inline:16px 0;border-top:.5px solid var(--sep)}
-.row .t{flex:1;min-width:0}.row .v{color:var(--label2)}
-input,select{font:inherit;color:var(--label);background:transparent;border:0;outline:0;min-width:0;flex:1;direction:ltr;text-align:right}
-input::placeholder{color:var(--label2)}
-.seg{display:flex;background:var(--fill);border-radius:9px;padding:2px;gap:2px}
-.seg button{flex:1;border:0;background:transparent;font:inherit;font-size:14px;font-weight:500;color:var(--label);padding:7px 4px;border-radius:7px;cursor:pointer;transition:.2s}
-.seg button.on{background:var(--card);box-shadow:0 3px 8px rgba(0,0,0,.12),0 1px 1px rgba(0,0,0,.08)}
-.btn{display:block;width:100%;border:0;border-radius:14px;background:var(--blue);color:#fff;font:inherit;font-weight:600;padding:15px;margin-top:20px;cursor:pointer;transition:.15s}
-.btn:active{transform:scale(.98);opacity:.85}.btn:disabled{opacity:.45}
-.btn.plain{background:var(--card);color:var(--red);margin-top:14px}
-.btn.alt{background:var(--card);color:var(--blue);margin-top:10px}
-.ic{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;font-size:17px;flex:none}
-.sub{font-size:13px;color:var(--label2);white-space:pre-wrap;margin-top:2px}
-.spin{width:20px;height:20px;border:2.5px solid var(--fill);border-top-color:var(--blue);border-radius:50%;animation:sp .8s linear infinite;flex:none}
-@keyframes sp{to{transform:rotate(360deg)}}
-.chk{color:var(--green);font-size:22px;flex:none}.dot{width:10px;height:10px;border-radius:50%;background:var(--fill);flex:none}
-.set .row .t{flex:none}.set input{font-size:16px}
-.out{display:none;font-size:14px;color:var(--label2);white-space:pre-wrap;padding:0 16px 12px;line-height:1.5}
-.open+.out{display:block}
-.verdict{border-radius:20px;padding:22px 20px;color:#fff;margin-top:22px;animation:in .4s ease}
-.verdict small{opacity:.85;font-size:13px}
-.verdict b{display:block;font-size:30px;font-weight:800;margin:2px 0 4px}
-.v-ok{background:linear-gradient(145deg,#34c759,#1f9d45)}.v-no{background:linear-gradient(145deg,#ff5a4f,#d62d22)}.v-un{background:linear-gradient(145deg,#ffa62b,#e07b00)}
-.plan{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
-.plan div{background:rgba(255,255,255,.2);border-radius:12px;padding:9px 12px;direction:ltr;text-align:right}
-.plan span{display:block;font-size:12px;opacity:.85;direction:rtl}.plan strong{font-size:17px}
-.chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
-.chip{background:var(--card);border-radius:20px;padding:5px 12px;font-size:13px;color:var(--label2)}
-.report{background:var(--card);border-radius:12px;padding:14px 16px;margin-top:12px;white-space:pre-wrap;font-size:15px;line-height:1.55}
-.err{background:rgba(255,59,48,.12);color:var(--red);border-radius:12px;padding:12px 16px;margin-top:16px;font-size:15px}
-.badge{font-size:12px;font-weight:700;color:#fff;border-radius:20px;padding:3px 10px;white-space:nowrap}
-.empty{text-align:center;color:var(--label2);padding:60px 20px}.empty .e{font-size:48px}
-.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:4px}
-.stats div{background:var(--card);border-radius:12px;padding:10px 6px;text-align:center}
-.stats b{display:block;font-size:20px}.stats span{font-size:12px;color:var(--label2)}
-.tabs{position:absolute;bottom:0;inset-inline:0;display:flex;background:var(--bar);backdrop-filter:saturate(180%) blur(22px);-webkit-backdrop-filter:saturate(180%) blur(22px);border-top:.5px solid var(--sep);padding:7px 0 18px;z-index:20}
-.tabs button{flex:1;border:0;background:none;font:inherit;font-size:10px;color:var(--label2);display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer}
-.tabs svg{width:27px;height:27px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-.tabs button.on{color:var(--blue)}
-.toast{position:absolute;top:8px;inset-inline:10px;z-index:50;background:var(--bar);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-radius:22px;padding:12px 16px;box-shadow:0 8px 30px rgba(0,0,0,.25);transform:translateY(-250%);opacity:0;pointer-events:none;transition:transform .45s cubic-bezier(.2,.9,.3,1.2),opacity .3s;cursor:pointer}
-.toast.show{transform:translateY(0);opacity:1;pointer-events:auto}
-@media(min-width:520px) and (min-height:760px){.toast{top:52px}}
-.toast b{font-size:14px;display:block}.toast span{font-size:13px;color:var(--label2);white-space:pre-line}
-.v-buy{background:linear-gradient(145deg,#34c759,#1f9d45)}.v-sell{background:linear-gradient(145deg,#ff5a4f,#d62d22)}.v-wait{background:linear-gradient(145deg,#8e8e93,#636366)}
-.gauge{display:flex;height:14px;border-radius:7px;overflow:hidden;direction:ltr;background:var(--fill);margin-top:6px}
-.gauge .gb{background:var(--green)}.gauge .gs{background:var(--red)}
-.gl{display:flex;justify-content:space-between;direction:ltr;font-size:13px;font-weight:600;margin-top:5px}
-.gl .b{color:var(--green)}.gl .s{color:var(--red)}
-.card{background:var(--card);border-radius:12px;padding:12px 14px;margin-top:12px}
-.mini{font-size:12.5px;color:var(--label2);margin-top:6px;line-height:1.5}
-.tfr{display:flex;align-items:center;gap:8px;padding:9px 14px}.tfr+.tfr{border-top:.5px solid var(--sep)}
-.tfr b{width:34px;direction:ltr;text-align:left}.tfr .m{flex:1;font-size:13px}.tfr .m small{display:block;color:var(--label2);font-size:12px}
-.sm{border:0;border-radius:10px;padding:8px 14px;font:inherit;font-size:14px;font-weight:600;cursor:pointer;background:var(--fill);color:var(--blue);margin-inline-end:8px}
-.sm.red{color:var(--red)}
-.seg.small button{font-size:13px;padding:5px 2px}
-.bar{height:6px;border-radius:3px;background:var(--fill);overflow:hidden;margin-top:8px}.bar i{display:block;height:100%;background:var(--blue);transition:width .4s}
-select{font:inherit;color:var(--label);background:transparent;border:0;outline:0;flex:1;min-width:0;direction:ltr;text-align:right}
-@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
-</style>
+<link rel="stylesheet" href="/static/app.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'">
 </head>
 <body>
-<div class="phone">
- <div class="island"></div>
- <div class="sb"><span id="clock"></span><span>●●● 5G ▮</span></div>
- <div class="toast" id="toast"><b id="toastT"></b><span id="toastB"></span></div>
- <div class="pages">
+<div class="app">
 
-  <section class="page on" id="p-run">
-   <h1>التحليل</h1>
-   <div class="group">
-    <div class="row"><span class="t">الأصل</span><input id="symbol" value="BTC/USDT" list="pairs" autocapitalize="characters" placeholder="BTC/USDT · XAU/USD · EUR/USD"></div>
-    <div class="row"><span class="t">قائمة سريعة</span><select id="pick"><option value="">اختر…</option></select></div>
-    <div class="row"><span class="t">رأس المال ($)</span><input id="capital" type="number" value="1000" min="1" inputmode="decimal"></div>
+ <aside class="side">
+  <div class="brand">
+   <svg viewBox="0 0 32 32" aria-hidden="true"><rect x="1" y="1" width="30" height="30" rx="9" fill="none" stroke="var(--brass)" stroke-width="2"/><path d="M7 21l5-6 4 3 8-9" fill="none" stroke="var(--brass)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+   <span>شركة التداول<br>الذكية</span>
+  </div>
+  <nav class="nav" id="nav">
+   <button class="on" data-p="desk"><svg viewBox="0 0 24 24"><path d="M3 17l5-6 4 3 8-9"/><path d="M3 21h18"/></svg>المكتب</button>
+   <button data-p="radar"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 12l5-5"/><circle cx="12" cy="12" r="1.5"/></svg>الرادار</button>
+   <button data-p="acct"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="13" rx="3"/><path d="M3 10h18M16 15h2"/></svg>الحساب</button>
+   <button data-p="lab"><svg viewBox="0 0 24 24"><path d="M9 3h6M10 3v6l-5 9a2 2 0 002 3h10a2 2 0 002-3l-5-9V3"/><path d="M7.5 15h9"/></svg>المختبر</button>
+   <button data-p="set"><svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg>الإعدادات</button>
+  </nav>
+  <div class="safe">تحليل ومحاكاة فقط. لا تُنفَّذ صفقات حقيقية، وليس نصيحة مالية.</div>
+ </aside>
+
+ <main class="main">
+  <div id="depsBar"></div>
+
+  <!-- ===================== المكتب ===================== -->
+  <section class="page on" id="p-desk">
+   <header class="ph"><h1>المكتب</h1><p>الترتيب ثابت: يفهم الفريق السياق أولاً ويحدد ما المسموح (شراء أو بيع أو لا شيء)، ثم يبحث عن صفقة داخل المسموح فقط.</p></header>
+
+   <div class="panel ctl">
+    <label class="f"><span>الأصل</span><input class="ltr" id="symbol" value="BTC/USDT" list="pairs" autocapitalize="characters" autocomplete="off" placeholder="BTC/USDT · XAU/USD · EUR/USD"></label>
+    <label class="f"><span>رأس المال ($)</span><input class="ltr" id="capital" type="number" value="1000" min="1" inputmode="decimal"></label>
+    <div class="f"><span>نوع التداول</span><div class="seg" id="styleSeg"><button data-s="swing" class="on">صفقات (سوينغ)</button><button data-s="scalp">سكالبينج</button></div></div>
+    <div class="f"><span>طريقة التحليل</span><div class="seg" id="modeSeg"><button data-m="local" class="on">محلي مجاني</button><button data-m="ai">ذكاء اصطناعي</button></div></div>
+    <button class="go" id="go">ابدأ التحليل</button>
+    <div class="quick" id="quick"></div>
+    <p class="hint" id="styleNote"></p>
    </div>
    <datalist id="pairs"></datalist>
-   <div class="hd">نوع التداول</div>
-   <div class="seg styleSeg"><button data-s="swing" class="on">صفقات (سوينغ)</button><button data-s="scalp">سكالبينج</button></div>
-   <div class="ft" id="styleNote">يختبر فريمات 1س / 4س / 1يوم ويدخل على 4س — صفقات تدوم ساعات إلى أيام.</div>
-   <div class="hd">طريقة التحليل</div>
-   <div class="seg" id="mode"><button data-m="local" class="on">محلي مجاني</button><button data-m="ai">ذكاء اصطناعي</button></div>
-   <div class="ft" id="modeNote">مخزون استراتيجيات (شراء وبيع) + اتجاه متعدد الفريمات، بدون مفتاح.</div>
-   <button class="btn" id="go">ابدأ اجتماع الفريق</button>
    <div id="err"></div>
-   <div id="team" style="display:none"><div class="hd">الفريق</div><div class="group" id="steps"></div></div>
-   <div id="verdict"></div>
-   <div class="ft" style="text-align:center;margin-top:22px">تحليل ومحاكاة فقط — لا يتم تنفيذ صفقات حقيقية، وليس نصيحة مالية.</div>
-  </section>
 
-  <section class="page" id="p-scan">
-   <h1>مسح السوق</h1>
-   <div class="ft" style="margin:0 4px 6px">يفحص قائمة المتابعة (تُعدَّل من الإعدادات) ويرتب الفرص. اضغط على عملة لتحليلها بالتفصيل.</div>
-   <div class="seg styleSeg" style="margin-top:6px"><button data-s="swing" class="on">صفقات</button><button data-s="scalp">سكالبينج</button></div>
-   <button class="btn" id="scanGo" style="margin-top:12px">امسح السوق الآن</button>
-   <div class="ft" id="scanProg" style="text-align:center"></div>
-   <div id="scanList" style="margin-top:14px"></div>
-  </section>
+   <div class="flow" id="flow" hidden></div>
+   <div id="stage1" class="stage"></div>
+   <div id="stage2" class="stage"></div>
+   <div id="stage3" class="stage"></div>
+   <details class="panel stage" id="teamBox" hidden><summary>تقارير الفريق — اضغط على أي موظف لقراءة تقريره</summary><div class="lst" id="steps"></div></details>
 
-
-  <section class="page" id="p-context">
-   <h1>فهم السوق</h1>
-   <div class="ft" style="margin:0 4px 8px">محرك سياق متعدد الفريمات: بنية السوق والسيولة وFVG والتقلب. النتائج تقديرات تحليلية وليست أوامر تداول.</div>
-   <div class="group"><div class="row"><span class="t">الأصل</span><input id="ctxSymbol" value="BTC/USDT" placeholder="BTC/USDT"></div></div>
-   <button class="btn" id="ctxGo">🧠 حلّل سياق السوق</button>
-   <div id="ctxResult" style="margin-top:12px"></div>
-   <div class="hd">Order Flow Intelligence</div>
-   <div class="ft">قراءة الصفقات المنفذة وعمق دفتر الأوامر وCVD. البيانات لحظية/محدودة بعينة المنصة وليست ضماناً لاتجاه السعر.</div>
-   <button class="btn alt" id="ofGo">📊 حلّل تدفق الأوامر والسيولة</button>
-   <div id="ofResult" style="margin-top:10px"></div>
-   <div class="hd">ربط MetaTrader 5 Demo</div>
-   <div class="ft">اتصال محلي بالطرفية المثبتة على Windows. يرفض التطبيق أي حساب Real أو Contest قبل إرسال الأمر. سجّل الدخول إلى حساب Demo داخل MT5 أولاً.</div>
-   <button class="btn alt" id="mt5Connect">اتصال وفحص حساب Demo</button>
-   <div id="mt5Status" class="ft" style="text-align:center">لم يتم فحص الاتصال بعد.</div>
-   <div id="mt5Performance"></div>
-   <div class="group">
-    <div class="row"><span class="t">التداول التلقائي عند الإشارة المعتمدة</span><input id="mt5Auto" type="checkbox" style="width:24px;height:24px"></div>
-    <div class="row"><span class="t">المخاطرة من Equity % (حد أقصى 1%)</span><input id="mt5Risk" type="number" value="0.5" min="0.1" max="1" step="0.1" style="max-width:100px"></div>
+   <div class="empty" id="deskEmpty">
+    <h3>ابدأ بأصل واحد</h3>
+    <div>اختر الأصل واضغط «ابدأ التحليل». سيمر الفريق بثلاث مراحل:</div>
+    <ol>
+     <li><b>السياق:</b> ما حالة السوق وإلى أين يميل، وهل يُسمح بالشراء أو البيع أو لا؟</li>
+     <li><b>الصفقة:</b> بحث عن دخول ووقف وهدف داخل المسموح فقط.</li>
+     <li><b>القرار:</b> إدارة المخاطر والموافقة أو الرفض.</li>
+    </ol>
    </div>
-   <button class="btn" id="mt5Save">حفظ إعداد التداول التجريبي</button>
-   <div class="ft">الدخول يتم بسعر Bid/Ask الحالي بعد إعادة فحص صلاحية الوقف والهدف. إذا أصبح السعر متأخراً أو تجاوز المخاطرة، يرفض المحرك الصفقة بدلاً من مطاردة السعر. لا توجد أوامر حقيقية.</div>
-   <div class="hd">محفظة Paper Trading</div>
-   <div class="ft">محاكاة محلية فقط، برأس مال افتراضي 10,000 USDT. لا يوجد اتصال بتنفيذ صفقات حقيقية. المخاطرة القصوى 1% للصفقة.</div>
-   <div id="paperStats"></div>
-   <div class="hd">فتح مركز تجريبي يدوي</div>
-   <div class="group">
-    <div class="row"><span class="t">الاتجاه</span><select id="paperSide"><option value="LONG">شراء LONG</option><option value="SHORT">بيع SHORT</option></select></div>
-    <div class="row"><span class="t">سعر الدخول</span><input id="paperEntry" type="number" step="any" placeholder="سعر الدخول"></div>
-    <div class="row"><span class="t">وقف الخسارة</span><input id="paperStop" type="number" step="any" placeholder="Stop Loss"></div>
-    <div class="row"><span class="t">جني الأرباح</span><input id="paperTarget" type="number" step="any" placeholder="Take Profit"></div>
-    <div class="row"><span class="t">المخاطرة %</span><input id="paperRisk" type="number" value="0.5" min="0.1" max="1" step="0.1"></div>
-   </div>
-   <button class="btn alt" id="paperOpen">فتح صفقة ورقية</button>
-   <div id="paperMsg" class="ft" style="text-align:center"></div>
-   <div id="paperPositions"></div>
   </section>
 
+  <!-- ===================== الرادار ===================== -->
+  <section class="page" id="p-radar">
+   <header class="ph"><h1>الرادار</h1><p>يفحص قائمة المتابعة (تُعدَّل من الإعدادات): السياق لكل أصل أولاً، ثم الصفقات للمسموح فقط. اضغط على أي أصل لتحليله بالتفصيل.</p></header>
+   <div class="panel" style="display:flex;gap:14px;align-items:center;flex-wrap:wrap">
+    <div class="seg" id="radarSeg"><button data-s="swing" class="on">صفقات</button><button data-s="scalp">سكالبينج</button></div>
+    <button class="go" id="scanGo">امسح السوق الآن</button>
+    <span class="hint" id="scanProg"></span>
+   </div>
+   <div id="scanList"></div>
+  </section>
+
+  <!-- ===================== الحساب ===================== -->
+  <section class="page" id="p-acct">
+   <header class="ph"><h1>الحساب</h1><p>المحفظة التجريبية، حساب MetaTrader 5 التجريبي، وسجل كل القرارات ونتائجها الفعلية.</p></header>
+   <div class="seg tabsbar" id="acctTabs"><button data-t="paper" class="on">المحفظة التجريبية</button><button data-t="mt5">MetaTrader 5</button><button data-t="hist">سجل القرارات</button></div>
+
+   <div id="t-paper">
+    <div id="paperStats"></div>
+    <div class="panel"><h2>مراكز مفتوحة</h2><div id="paperPositions"></div></div>
+    <div class="panel"><h2>فتح مركز يدوي</h2><p class="sub">محاكاة محلية برأس مال افتراضي 10,000 USDT وحد أقصى 1% مخاطرة. من نتيجة التحليل يمكنك فتح مركز بزر واحد.</p>
+     <div class="row3" style="margin-bottom:12px">
+      <label class="f"><span>الأصل</span><input class="ltr" id="paperSymbol" value="BTC/USDT"></label>
+      <label class="f"><span>الاتجاه</span><select id="paperSide"><option value="LONG">شراء LONG</option><option value="SHORT">بيع SHORT</option></select></label>
+      <label class="f"><span>المخاطرة %</span><input class="ltr" id="paperRisk" type="number" value="0.5" min="0.1" max="1" step="0.1"></label>
+     </div>
+     <div class="row3">
+      <label class="f"><span>سعر الدخول</span><input class="ltr" id="paperEntry" type="number" step="any"></label>
+      <label class="f"><span>وقف الخسارة</span><input class="ltr" id="paperStop" type="number" step="any"></label>
+      <label class="f"><span>جني الأرباح</span><input class="ltr" id="paperTarget" type="number" step="any"></label>
+     </div>
+     <div class="acts"><button class="btn main-a" id="paperOpen">فتح المركز</button><span class="hint" id="paperMsg"></span></div>
+    </div>
+   </div>
+
+   <div id="t-mt5" hidden>
+    <div class="panel"><h2>ربط MetaTrader 5 (Demo فقط)</h2>
+     <p class="sub">اتصال محلي بالطرفية المثبتة على Windows. يرفض التطبيق أي حساب Real أو Contest قبل إرسال أي أمر. سجّل الدخول إلى حساب Demo داخل MT5 أولاً.</p>
+     <div class="acts" style="margin-top:0"><button class="btn" id="mt5Connect">اتصال وفحص الحساب</button><span class="hint" id="mt5Status">لم يتم الفحص بعد.</span></div>
+     <div id="mt5Performance" style="margin-top:14px"></div>
+    </div>
+    <div class="panel"><h2>التنفيذ التلقائي على Demo</h2>
+     <p class="sub">يعمل فقط عند إشارة موافق عليها. الدخول بسعر Bid/Ask الحالي بعد إعادة فحص الوقف والهدف، ويُرفض الأمر إن تأخر السعر بدل مطاردته.</p>
+     <div class="row2" style="align-items:end">
+      <label class="f" style="flex-direction:row;align-items:center;gap:12px"><span class="sw"><input type="checkbox" id="mt5Auto"><i></i></span><span style="font-size:14.5px;color:var(--text)">تفعيل التداول التلقائي</span></label>
+      <label class="f"><span>المخاطرة من Equity % (حد أقصى 1%)</span><input class="ltr" id="mt5Risk" type="number" value="0.5" min="0.1" max="1" step="0.1"></label>
+     </div>
+     <div class="acts"><button class="btn main-a" id="mt5Save">حفظ الإعداد</button></div>
+    </div>
+   </div>
+
+   <div id="t-hist" hidden>
+    <div id="hstats"></div>
+    <div class="hint" id="hupd" style="margin:6px 2px"></div>
+    <div id="hist"></div>
+    <div class="acts"><button class="btn danger" id="clr" hidden>مسح السجل</button></div>
+   </div>
+  </section>
+
+  <!-- ===================== المختبر ===================== -->
   <section class="page" id="p-lab">
-   <h1>العقل</h1>
-   <div class="ft" style="margin:0 4px 6px">دورة التعلم: يتعلم من نتائج صفقاتك الحية، يكتشف علاقات بين الأصول (عملات، ذهب، فوركس، أسهم)، ويولّد استراتيجيات جديدة ويختبرها. لا يُقبل شيء إلا بعد اختبار صارم، ولا يُنفَّذ أي شيء حقيقي.</div>
-   <div id="brStats"></div>
-   <button class="btn" id="brGo" style="margin-top:12px">🧠 ابدأ دورة تعلم الآن</button>
-   <div class="ft" id="brProg" style="text-align:center"></div><div class="bar" id="brBar" style="display:none"><i style="width:0"></i></div>
-   <div class="ft" style="text-align:center">للتعلم المستمر تلقائياً: الإعدادات ← «دورة تعلم تلقائية كل (ساعة)» (والتطبيق مفتوح).</div>
-   <div class="hd">علاقات مكتشفة بين الأصول</div><div id="brRel"></div>
-   <div class="ft">العلاقة ليست سببية. ملاحظة: «يسبق بيوم» بين أسهم وعملات رقمية قد ينتج جزئياً عن اختلاف أوقات إغلاق الأسواق. تُستعمل علاقات التقدم/التأخر (بحد أقصى ±12 نقطة) في تحليل السوينغ فقط.</div>
-   <div class="hd">سجل التعلم</div><div id="brLog"></div>
-   <div class="hd">مخزون الاستراتيجيات</div>
-   <div id="labStats"></div>
-   <button class="btn" id="labGo" style="margin-top:12px">🔎 ابحث وأنشئ استراتيجيات جديدة</button>
-   <button class="btn alt" id="labAi">🤖 اقتراح بالذكاء الاصطناعي (Gemini + بحث)</button>
-   <div class="ft" id="labProg" style="text-align:center"></div><div class="bar" id="labBar" style="display:none"><i style="width:0"></i></div>
-   <div id="labList" style="margin-top:14px"></div>
+   <header class="ph"><h1>المختبر</h1><p>هنا يتعلم النظام: يكتشف علاقات بين الأصول، ويولّد استراتيجيات ويختبرها، ويراجع نفسه على نتائجك الحية. لا يُقبل شيء إلا بعد اختبار صارم.</p></header>
+   <div class="seg tabsbar" id="labTabs"><button data-t="brain" class="on">العقل والعلاقات</button><button data-t="strat">مخزون الاستراتيجيات</button></div>
+
+   <div id="t-brain">
+    <div id="brStats"></div>
+    <div class="acts" style="margin:0 0 6px"><button class="btn main-a" id="brGo">ابدأ دورة تعلم الآن</button><span class="hint" id="brProg"></span></div>
+    <div class="bar" id="brBar" hidden><i style="width:0"></i></div>
+    <p class="hint" style="margin-top:10px">للتعلم المستمر تلقائياً: الإعدادات ← «دورة تعلم تلقائية كل (ساعة)» والتطبيق مفتوح.</p>
+    <div class="panel"><h2>علاقات مكتشفة بين الأصول</h2><div id="brRel"></div>
+     <p class="hint" style="margin-top:10px">العلاقة ليست سببية، و«يسبق بيوم» بين أسهم وعملات رقمية قد ينتج جزئياً عن اختلاف أوقات الإغلاق. تدخل في السياق (حتى ±12 نقطة) لتحليل السوينغ فقط.</p></div>
+    <div class="panel"><h2>سجل التعلم</h2><div id="brLog"></div></div>
+   </div>
+
+   <div id="t-strat" hidden>
+    <div id="labStats"></div>
+    <div class="acts" style="margin:0 0 6px"><button class="btn main-a" id="labGo">ابحث وأنشئ استراتيجيات جديدة</button><button class="btn" id="labAi">اقتراح بالذكاء الاصطناعي (Gemini)</button><span class="hint" id="labProg"></span></div>
+    <div class="bar" id="labBar" hidden><i style="width:0"></i></div>
+    <div id="labList" style="margin-top:14px"></div>
+   </div>
   </section>
 
-  <section class="page" id="p-hist">
-   <h1>السجل</h1>
-   <div id="hstats"></div>
-   <div class="ft" id="hupd" style="text-align:center;margin:8px 0"></div>
-   <div id="hist"></div>
-   <button class="btn plain" id="clr" style="display:none">مسح السجل</button>
+  <!-- ===================== الإعدادات ===================== -->
+  <section class="page" id="p-set">
+   <header class="ph"><h1>الإعدادات</h1><p>المفاتيح تُحفظ في ملف .env على جهازك فقط. الحقول السرية تُترك فارغة إن لم ترد تغييرها.</p></header>
+   <div class="setgrid">
+    <div class="panel"><h2>الذكاء الاصطناعي (Gemini)</h2><p class="sub">للوضع «ذكاء اصطناعي» ولاقتراح الاستراتيجيات.</p>
+     <div class="stack">
+      <label class="f"><span>المفتاح</span><input class="ltr" id="key" type="password" placeholder="AIzaSy…" autocomplete="off"></label>
+      <label class="f"><span>نموذج الفريق</span><input class="ltr" id="worker"></label>
+      <label class="f"><span>نموذج المدير</span><input class="ltr" id="ceo"></label>
+     </div></div>
+    <div class="panel"><h2>Grok (xAI)</h2><p class="sub">يقرأ منصة X لآخر 48 ساعة ويعطي رأياً ثانياً استشارياً. كل تحليل يستهلك طلبين من رصيدك.</p>
+     <div class="stack">
+      <label class="f"><span>مفتاح xAI</span><input class="ltr" id="xai_key" type="password" placeholder="xai-…" autocomplete="off"></label>
+      <label class="f"><span>نموذج Grok</span><input class="ltr" id="grok_model" placeholder="grok-4.7"></label>
+      <label class="f"><span>رأي Grok على كل تحليل</span><select id="grok_review"><option value="1">مفعّل</option><option value="0">مطفأ (نبض X فقط)</option></select></label>
+     </div></div>
+    <div class="panel"><h2>المسح والتنبيهات</h2><p class="sub">المسح التلقائي يعمل والتطبيق مفتوح.</p>
+     <div class="stack">
+      <label class="f"><span>قائمة المتابعة</span><input class="ltr" id="watchlist" placeholder="BTC,ETH,XAU/USD,EUR/USD"></label>
+      <div class="row2">
+       <label class="f"><span>مسح تلقائي كل (دقيقة)</span><input class="ltr" id="auto_min" type="number" min="0" placeholder="0 = مطفأ"></label>
+       <label class="f"><span>رأس مال المسح ($)</span><input class="ltr" id="s_capital" type="number" min="1"></label>
+      </div>
+      <div class="row2">
+       <label class="f"><span>وضع المسح التلقائي</span><select id="auto_mode"><option value="swing">صفقات</option><option value="scalp">سكالبينج</option><option value="both">الاثنان</option></select></label>
+       <label class="f"><span>دورة تعلم تلقائية كل (ساعة)</span><input class="ltr" id="lab_hours" type="number" min="0" placeholder="0 = مطفأ"></label>
+      </div>
+     </div></div>
+    <div class="panel"><h2>Telegram</h2><p class="sub">أنشئ بوتاً من @BotFather، أرسل له رسالة، وخذ Chat ID من @userinfobot.</p>
+     <div class="stack">
+      <label class="f"><span>Token</span><input class="ltr" id="tg_token" type="password" placeholder="123456:ABC…" autocomplete="off"></label>
+      <label class="f"><span>Chat ID</span><input class="ltr" id="tg_chat" placeholder="رقم المحادثة"></label>
+      <div class="acts" style="margin-top:0"><button class="btn" id="tgTest">إرسال تنبيه تجريبي</button></div>
+     </div></div>
+   </div>
+   <div class="acts"><button class="btn main-a" id="save">حفظ الإعدادات</button><span class="hint" id="setMsg"></span></div>
+   <div class="panel" style="margin-top:14px"><h2>الحالة</h2>
+    <div class="kvr"><span>مفسّر بايثون</span><span class="num mut" id="s-py" style="font-size:12.5px"></span></div>
+    <div class="kvr"><span>المكتبات الأساسية</span><span id="s-deps"></span></div>
+    <div class="kvr"><span>مكتبة CrewAI</span><span id="s-ai"></span></div>
+    <div class="kvr"><span>مفتاح Gemini</span><span id="s-key"></span></div>
+    <div class="kvr"><span>مفتاح Grok (xAI)</span><span id="s-xai"></span></div>
+    <div class="kvr"><span>Telegram</span><span id="s-tg"></span></div>
+    <div class="kvr"><span>المسح التلقائي</span><span id="s-auto"></span></div>
+    <div class="kvr"><span>وضع المحاكاة الآمن</span><span class="up">دائماً مفعّل</span></div>
+   </div>
   </section>
-
-  <section class="page set" id="p-set">
-   <h1>الإعدادات</h1>
-   <div class="hd">الذكاء الاصطناعي (Google Gemini)</div>
-   <div class="group">
-    <div class="row"><span class="t">المفتاح</span><input id="key" type="password" placeholder="AIzaSy…" autocomplete="off"></div>
-    <div class="row"><span class="t">نموذج الفريق</span><input id="worker"></div>
-    <div class="row"><span class="t">نموذج المدير</span><input id="ceo"></div>
-   </div>
-   <div class="hd">Grok (xAI) — قراءة منصة X ورأي ثانٍ</div>
-   <div class="group">
-    <div class="row"><span class="t">مفتاح xAI</span><input id="xai_key" type="password" placeholder="xai-…" autocomplete="off"></div>
-    <div class="row"><span class="t">نموذج Grok</span><input id="grok_model" placeholder="grok-4.7"></div>
-    <div class="row"><span class="t">رأي Grok على كل تحليل</span><select id="grok_review"><option value="1">مفعّل</option><option value="0">مطفأ (نبض X فقط)</option></select></div>
-   </div>
-   <div class="ft">يضيف نبض X (آخر 48 ساعة) لتقرير الأخبار لكل الأصول بما فيها الذهب والفوركس، ويعطي رأياً مستقلاً استشارياً لا يغيّر الأرقام. لا يُستعمل في المسح السريع. كل تحليل يستهلك طلبين من رصيد xAI المدفوع.</div>
-   <div class="hd">المسح والتنبيهات</div>
-   <div class="group">
-    <div class="row"><span class="t">قائمة المتابعة</span><input id="watchlist" placeholder="BTC,ETH,XAU/USD,EUR/USD"></div>
-    <div class="row"><span class="t">مسح تلقائي كل (دقيقة)</span><input id="auto_min" type="number" min="0" placeholder="0 = مطفأ"></div>
-    <div class="row"><span class="t">رأس مال المسح ($)</span><input id="s_capital" type="number" min="1"></div>
-    <div class="row"><span class="t">وضع المسح التلقائي</span><select id="auto_mode"><option value="swing">صفقات</option><option value="scalp">سكالبينج</option><option value="both">الاثنان</option></select></div>
-    <div class="row"><span class="t">دورة تعلم تلقائية كل (ساعة)</span><input id="lab_hours" type="number" min="0" placeholder="0 = مطفأ"></div>
-    <div class="row"><span class="t">Telegram Token</span><input id="tg_token" type="password" placeholder="123456:ABC…" autocomplete="off"></div>
-    <div class="row"><span class="t">Telegram Chat ID</span><input id="tg_chat" placeholder="رقم المحادثة"></div>
-   </div>
-   <div class="ft">المسح التلقائي يعمل فقط والتطبيق مفتوح. المفاتيح تُحفظ في ملف .env على جهازك فقط.</div>
-   <button class="btn" id="save">حفظ</button>
-   <button class="btn alt" id="tgTest">إرسال تنبيه تجريبي</button>
-   <div id="setMsg" class="ft" style="text-align:center"></div>
-   <div class="hd">الحالة</div>
-   <div class="group">
-    <div class="row"><span class="t">مكتبة CrewAI</span><span class="v" id="s-ai"></span></div>
-    <div class="row"><span class="t">مفتاح Gemini</span><span class="v" id="s-key"></span></div>
-    <div class="row"><span class="t">مفتاح Grok (xAI)</span><span class="v" id="s-xai"></span></div>
-    <div class="row"><span class="t">Telegram</span><span class="v" id="s-tg"></span></div>
-    <div class="row"><span class="t">المسح التلقائي</span><span class="v" id="s-auto"></span></div>
-    <div class="row"><span class="t">وضع المحاكاة الآمن</span><span class="v">دائماً ✓</span></div>
-   </div>
-   <div class="ft">التطبيق لا يتصل بحسابك لتنفيذ صفقات حقيقية؛ محفظة Paper Trading محلية فقط.</div>
-  </section>
- </div>
-
- <nav class="tabs">
-  <button class="on" data-p="run"><svg viewBox="0 0 24 24"><path d="M3 17l5-6 4 3 8-9"/><path d="M3 21h18"/></svg>التحليل</button>
-  <button data-p="scan"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>المسح</button>
-  <button data-p="lab"><svg viewBox="0 0 24 24"><path d="M9 3h6M10 3v6l-5 9a2 2 0 002 3h10a2 2 0 002-3l-5-9V3"/><path d="M7.5 15h9"/></svg>العقل</button>
-  <button data-p="context"><svg viewBox="0 0 24 24"><path d="M3 17l5-6 4 3 8-9"/><path d="M3 21h18"/></svg>السياق</button>
-  <button data-p="hist"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>السجل</button>
-  <button data-p="set"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg>الإعدادات</button>
- </nav>
+ </main>
 </div>
-
-<script>
-const $=s=>document.querySelector(s), api=(u,b)=>fetch(u,b?{method:'POST',headers:{'Content-Type':'application/json','X-App':'1'},body:JSON.stringify(b)}:{}).then(r=>r.json());
-const ICONS={price:['💹','#34c759'],news:['📰','#ff9500'],strategist:['🧠','#00c7be'],hunter:['🎯','#ff3b30'],simulator:['🧪','#af52de'],risk:['🛡️','#007aff'],ceo:['👔','#5856d6']};
-const DEC={APPROVED:['v-ok','تمت الموافقة'],REJECTED:['v-no','تم الرفض'],UNKNOWN:['v-un','قرار غير واضح']};
-const STYLE_NOTE={swing:'يختبر فريمات 1س / 4س / 1يوم ويدخل على 4س — صفقات تدوم ساعات إلى أيام.',scalp:'يختبر فريمات 5د / 15د / 1س ويدخل على 15د — صفقات قصيرة؛ السبريد والتنفيذ حاسمان.'};
-let mode='local',style='swing',STEPS=[],timer=null,scanTimer=null,labTimer=null,opened=new Set(),lastAlert=0,LASTJOB=null,R=null,CHTF=null,AIKEY=false;
-const esc=s=>String(s??'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
-const clock=()=>$('#clock').textContent=new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});clock();setInterval(clock,30000);
-
-function goTab(p){document.querySelectorAll('.tabs button,.page').forEach(e=>e.classList.remove('on'));
- document.querySelector(`.tabs button[data-p=${p}]`).classList.add('on');$('#p-'+p).classList.add('on');$('.pages').scrollTop=0;
- if(p==='hist')loadHist();if(p==='set')loadStatus();if(p==='lab')loadLab();if(p==='context'){loadPaper();loadMt5();$('#ctxSymbol').value=$('#symbol').value||'BTC/USDT';}}
-document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>goTab(b.dataset.p));
-document.querySelectorAll('#mode button').forEach(b=>b.onclick=()=>{
- document.querySelectorAll('#mode button').forEach(x=>x.classList.remove('on'));b.classList.add('on');mode=b.dataset.m;
- $('#modeNote').textContent=mode==='ai'?'7 وكلاء ذكاء اصطناعي (CrewAI) بينهم باحث الاستراتيجيات — يحتاج مفتاح Google AI Studio.':'مخزون استراتيجيات (شراء وبيع) + اتجاه متعدد الفريمات، بدون مفتاح.';});
-document.querySelectorAll('.styleSeg button').forEach(b=>b.onclick=()=>{style=b.dataset.s;
- document.querySelectorAll('.styleSeg button').forEach(x=>x.classList.toggle('on',x.dataset.s===style));$('#styleNote').textContent=STYLE_NOTE[style]});
-$('#pick').onchange=e=>{if(e.target.value){$('#symbol').value=e.target.value;e.target.value=''}};
-
-/* ---------- رسم الشموع + EMA + خطوط الصفقة ---------- */
-function chart(ch,p,tf){
- if(!ch||!ch.c.length)return'';
- const c=ch.c,W=340,H=210,pad=8;let hi=Math.max(...c.map(x=>x[1])),lo=Math.min(...c.map(x=>x[2]));
- if(p){const lv=[p.take_profit2,p.take_profit,p.stop_loss,p.entry];hi=Math.max(hi,...lv);lo=Math.min(lo,...lv)}
- const y=v=>pad+(hi-v)/((hi-lo)||1)*(H-2*pad),bw=W/c.length,X=i=>i*bw+bw/2;
- let s=c.map((x,i)=>{const [o,h,l,cl]=x,col=cl>=o?'var(--green)':'var(--red)';
-  return `<line x1="${X(i)}" x2="${X(i)}" y1="${y(h)}" y2="${y(l)}" stroke="${col}"/><rect x="${X(i)-bw*.36}" y="${y(Math.max(o,cl))}" width="${bw*.72}" height="${Math.max(1,Math.abs(y(o)-y(cl)))}" fill="${col}"/>`}).join('');
- const line=(arr,col)=>`<polyline fill="none" stroke="${col}" stroke-width="1.2" opacity=".85" points="${arr.map((v,i)=>X(i)+','+y(v)).join(' ')}"/>`;
- s+=line(ch.e20,'#ff9500')+line(ch.e50,'#5856d6');
- if(p)[['take_profit2','var(--green)','TP2'],['take_profit','var(--green)','TP1'],['entry','var(--blue)','Entry'],['entry_limit','var(--blue)','Limit'],['stop_loss','var(--red)','SL']].forEach(([k,col,t])=>{
-  if(!p[k])return;s+=`<line x1="0" x2="${W}" y1="${y(p[k])}" y2="${y(p[k])}" stroke="${col}" stroke-width="1.2" stroke-dasharray="5 3"/><text x="${W-4}" y="${y(p[k])-3}" font-size="10" fill="${col}" text-anchor="end">${t} ${p[k]}</text>`});
- return `<svg viewBox="0 0 ${W} ${H}" width="100%" style="direction:ltr;display:block">${s}</svg><div class="ft" style="text-align:center;margin:4px 0 0">شموع ${tf} — آخر ${c.length} شمعة · <span style="color:#ff9500">EMA20</span> · <span style="color:#5856d6">EMA50</span></div>`}
-function drawChart(){if(!R)return;const box=$('#chartBox');if(!box)return;
- box.innerHTML=`<div class="seg small" style="margin-bottom:8px">${Object.keys(R.charts).map(t=>`<button data-tf="${t}" class="${t===CHTF?'on':''}">${t}${t===R.entry_tf?' ★':''}</button>`).join('')}</div>${chart(R.charts[CHTF],R.plan,CHTF)}`;
- box.querySelectorAll('.seg button').forEach(b=>b.onclick=()=>{CHTF=b.dataset.tf;drawChart()})}
-
-function planGrid(p){return `<div class="plan"><div><span>دخول سوقي فوري</span><strong>${p.entry}</strong></div><div><span>وقف الخسارة SL</span><strong>${p.stop_loss}</strong></div>
- <div><span>الربح TP1 (1:${p.rr})</span><strong>${p.take_profit}</strong></div><div><span>الربح TP2</span><strong>${p.take_profit2}</strong></div>
- <div><span>حجم الصفقة</span><strong>$${p.size_usd}</strong></div><div><span>أقصى خسارة</span><strong>$${p.risk_usd}</strong></div></div>`+
- (p.leverage>1?`<div style="margin-top:10px;font-size:13px;opacity:.92">⚙️ الحجم يتطلب رافعة ≈ ${p.leverage}× (فوركس/ذهب/بيع على المكشوف)</div>`:'')+
- (p.entry_limit?`<div style="margin-top:10px;font-size:13px;opacity:.92">💡 السعر بعيد عن المتوسط: الأفضل الانتظار والدخول عند <b style="display:inline;font-size:13px">${p.entry_limit}</b></div>`:'')}
-
-function marketModelCard(mm){if(!mm||!mm.available)return '';const ml=mm.ml||{},fmt=(v,d=2)=>v==null?'غير متاح':Number(v).toFixed(d);
- const structure={bullish:'صاعد',bearish:'هابط',mixed:'مختلط'},regime={trending:'اتجاهي',ranging:'عرضي',transition:'انتقالي'};
- return `<div class="card"><b>🧠 خوارزميات فهم السوق</b><div class="mini">
- <b>حالة السوق:</b> ${regime[mm.regime]||mm.regime} · <b>البنية:</b> ${structure[mm.structure]||mm.structure} · <b>جودة السياق:</b> ${mm.quality_score}/100<br>
- CHOP: ${fmt(mm.choppiness)} · Efficiency Ratio: ${fmt(mm.efficiency_ratio,3)} · تقلب ATR: ${mm.volatility} (${fmt(mm.atr_percentile,1)} percentile)<br>
- <b>VWAP:</b> ${fmt(mm.vwap_gap_pct,3)}% انحراف · <b>ضغط الحجم التقريبي:</b> ${fmt(mm.flow_imbalance_proxy,3)}
- ${ml.available?`<hr style="border-color:var(--line);opacity:.35"><b>نموذج ML تجريبي</b><br>ميل صاعد تقديري: ${fmt(ml.prob_up_experimental*100,1)}% خلال ${ml.horizon_bars} شموع · عينة التدريب ${ml.samples}<br>اختبار زمني خارج العينة: ${fmt(ml.oos_accuracy,1)}% دقة على ${ml.oos_samples} عينة · Brier ${fmt(ml.oos_brier,4)} مقابل baseline ${fmt(ml.baseline_brier,4)} · ${ml.beats_baseline?'أفضل من baseline':'لم يتفوق على baseline'}`:'<br>نموذج ML: بيانات غير كافية'}
- <br><small>تنبيه: ضغط الحجم Proxy من OHLCV وليس CVD أو دفتر أوامر حقيقياً. نموذج ML تجريبي وليس احتمال ربح معايراً.</small></div></div>`;}
-function grokCard(r){const g=r.grok;if(!g||(!g.pulse&&!g.review))return'';
- const SM={'-2':'سلبي جداً','-1':'سلبي','0':'محايد','1':'إيجابي','2':'إيجابي جداً'},VR={agree:['يوافق ✅','var(--green)'],caution:['يوصي بالحذر ⚠️','var(--orange)'],disagree:['يعارض ❌','var(--red)']};let h='<div class="card"><b>🐦 Grok — منصة X</b>';
- if(g.pulse&&g.pulse.sentiment!==undefined)h+=`<div class="mini"><b>المزاج: ${SM[g.pulse.sentiment]}</b> (ثقة ${g.pulse.confidence})<br>${esc(g.pulse.summary)}${g.pulse.posts.map(p=>`<br>• ${esc(p.handle)}: ${esc(p.gist)}`).join('')}${g.pulse.risks.map(x=>`<br>⚠️ ${esc(x)}`).join('')}</div>`;
- else if(g.pulse&&g.pulse.error)h+=`<div class="mini">تعذر جلب نبض X: ${esc(g.pulse.error)}</div>`;
- if(g.review&&g.review.verdict){const [t,c]=VR[g.review.verdict];h+=`<div class="mini"><b style="color:${c}">رأي Grok المستقل: ${t}</b>${g.review.points.map(x=>`<br>• ${esc(x)}`).join('')}<br><i>استشاري — لا يغيّر الأرقام.</i></div>`}
- return h+'</div>'}
-function verdict(r,sym,jid){
- const p=r.plan;let cls,title,sub;
- if(p){cls=r.action==='BUY'?'v-buy':'v-sell';title=r.action==='BUY'?'شراء BUY':'بيع SELL';
-  sub=(r.decision==='APPROVED'?'اجتاز الفلتر الصارم':'لم يجتز الفلتر الصارم — مضاربة بحجم صغير')+' · '+r.grade_label}
- else if(r.decision==='UNKNOWN'){cls='v-un';title=DEC.UNKNOWN[1];sub=''}
- else{cls='v-wait';title='انتظار — لا صفقة الآن';sub='لا توجد فرصة واضحة'}
- const dir=r.buy_pct!=null?`<div class="card"><b>أيهما أقوى: شراء أم بيع؟</b>
-  <div class="gauge"><div class="gb" style="width:${r.buy_pct}%"></div><div class="gs" style="width:${r.sell_pct}%"></div></div>
-  <div class="gl"><span class="b" dir="rtl">شراء ${r.buy_pct}%</span><span class="s" dir="rtl">بيع ${r.sell_pct}%</span></div>
-  <div class="mini">الدرجات: شراء ${r.buy_score}/100 · بيع ${r.sell_score}/100<br>نجاح تاريخي حديث لاستراتيجيات الاتجاه الناجحة — شراء: ${r.side_hist.BUY.n?r.side_hist.BUY.win_rate+'% ('+r.side_hist.BUY.n+' صفقة)':'لا بيانات'} · بيع: ${r.side_hist.SELL.n?r.side_hist.SELL.win_rate+'% ('+r.side_hist.SELL.n+' صفقة)':'لا بيانات'}
-  ${p&&p.win_rate_est!=null?`<br><b>النجاح المقدّر لهذه الصفقة: ${p.win_rate_est}%</b> (مُقلَّص نحو الحياد بسبب صغر العينة — ليس ضماناً)`:''}</div></div>`:'';
- const chips=r.regime_label?`<div class="chips"><span class="chip">${r.mode_label}</span><span class="chip">السوق: ${r.regime_label}</span><span class="chip">الدرجة: ${r.setup_score}/100</span><span class="chip">الثقة الإحصائية: ${r.confidence}</span></div>`:'';
- const tfs=(r.tfs||[]).length?`<div class="hd">الفريمات المختبرة</div><div class="group">${r.tfs.map(t=>`<div class="tfr"><b>${t.tf}</b><div class="m">${t.trend_label} · RSI ${t.rsi} · ${t.regime}<small>شراء ${t.buy} · بيع ${t.sell}${t.active.length?' — '+t.active.map(a=>(a.signal==='BUY'?'📈 ':'📉 ')+esc(a.name)).join('، '):''}</small></div></div>`).join('')}</div>`:'';
- const st=(r.strategies||[]).length?`<div class="hd">الاستراتيجيات — اختبار على ${r.bars} شمعة (${r.entry_tf})</div><div class="group">${r.strategies.map(s=>`<div class="row"><div class="t">${esc(s.name)}<div class="sub">${s.signal==='BUY'?'📈 شراء الآن · ':s.signal==='SELL'?'📉 بيع الآن · ':''}${s.origin==='builtin'?'':'(مولّدة) · '}صفقات ${s.stats.n} · نجاح ${s.stats.win_rate}% · ${s.stats.avg_r}R · PF ${s.stats.pf}</div></div><span class="badge" style="background:${s.passed?'var(--green)':'var(--label2)'}">${s.passed?'اجتازت':'لم تجتز'}</span></div>`).join('')}</div><div class="ft">الاختبار يشمل الاتجاهين (شراء وبيع) بوقف وهدف بالـATR وتكلفة تنفيذ. عدد الصفقات القليل يعني أن النتائج تقديرية.</div>`:'';
- R=r;CHTF=r.entry_tf||Object.keys(r.charts||{})[0];LASTJOB=jid;
- return `<div class="verdict ${cls}"><small>${esc(sym)}${sub?' · '+sub:''}</small><b>${title}</b>${p?planGrid(p):''}</div>
- ${p?`<button class="btn alt" id="tgSend">📨 أرسل الصفقة إلى Telegram</button><div class="ft" id="tgMsg" style="text-align:center"></div>`:''}
- ${r.mt5_execution?`<div class="card"><b>MetaTrader 5 Demo</b><div class="mini">${r.mt5_execution.ok?`<span style="color:var(--green)">تم إرسال أمر Demo ✓</span><br>${esc(r.mt5_execution.symbol)} · ${r.mt5_execution.side} · حجم ${r.mt5_execution.volume}<br>السعر ${r.mt5_execution.requested_price} · SL ${r.mt5_execution.stop_loss} · TP ${r.mt5_execution.take_profit}<br>المخاطرة المقدرة ${r.mt5_execution.risk_cash_estimate} ${esc(r.mt5_execution.message||'')}`:esc(r.mt5_execution.error||r.mt5_execution.reason||'لم يتم تنفيذ أمر Demo')}</div></div>`:''}
- ${chips}${dir}${marketModelCard(r.market_model)}${grokCard(r)}${r.charts?'<div class="card" id="chartBox"></div>':''}${tfs}${st}<div class="report">${esc(r.report)}</div>`;}
-function afterVerdict(){drawChart();const b=$('#tgSend');if(b)b.onclick=sendTg}
-async function sendTg(){$('#tgMsg').textContent='جارٍ الإرسال…';const r=await api('/api/telegram/send',{job:LASTJOB});$('#tgMsg').textContent=r.ok?'وصلت الصفقة إلى Telegram ✓':'فشل: '+(r.error||'')}
-
-/* ---------- التحليل ---------- */
-function drawSteps(j){
- $('#steps').innerHTML=STEPS.map(s=>{const st=j.steps[s.key]||{state:'wait',text:''},[e,c]=ICONS[s.key]||['•','#888'],tap=st.state==='done';
-  const right=st.state==='running'?'<div class="spin"></div>':tap?'<span class="chk">✓</span>':'<div class="dot"></div>';
-  return `<div class="row ${tap?'tap':''} ${opened.has(s.key)?'open':''}" data-k="${s.key}" style="${tap?'cursor:pointer':''}"><div class="ic" style="background:${c}22">${e}</div>
-  <div class="t">${s.name}<div class="sub">${s.en}</div></div>${right}</div><div class="out">${esc(st.text)}</div>`}).join('');
- document.querySelectorAll('#steps .row.tap').forEach(r=>r.onclick=()=>{r.classList.toggle('open');r.classList.contains('open')?opened.add(r.dataset.k):opened.delete(r.dataset.k)});}
-$('#go').onclick=async()=>{
- opened.clear();$('#err').innerHTML='';$('#verdict').innerHTML='';$('#go').disabled=true;$('#go').textContent='الفريق يعمل…';
- const r=await api('/api/run',{symbol:$('#symbol').value,capital:$('#capital').value,mode,style});
- if(r.error){fail(r.error);return}
- $('#team').style.display='block';
- timer=setInterval(async()=>{
-  const j=await api('/api/job/'+r.id);drawSteps(j);
-  if(j.status==='done'){clearInterval(timer);$('#verdict').innerHTML=verdict(j.result,j.symbol,j.id);afterVerdict();reset();$('.pages').scrollTo({top:99999,behavior:'smooth'})}
-  if(j.status==='error'){clearInterval(timer);fail(j.error)}},1000);};
-function fail(m){clearInterval(timer);$('#err').innerHTML=`<div class="err">${esc(m)}</div>`;reset()}
-function reset(){$('#go').disabled=false;$('#go').textContent='ابدأ اجتماع الفريق'}
-
-/* ---------- المسح ---------- */
-const GB={A:['var(--green)','قوية'],B:['var(--blue)','متوسطة'],C:['var(--orange)','ضعيفة'],'-':['var(--label2)','انتظار']};
-function drawScan(j){
- const rows=[...j.results].sort((a,b)=>b.score-a.score);
- $('#scanProg').textContent=j.status==='done'?`اكتمل المسح (${j.done} أصل)`:`جارٍ المسح… ${j.done}/${j.total}`;
- $('#scanList').innerHTML=rows.length?`<div class="group">${rows.map(x=>{if(x.error)return `<div class="row"><div class="t">${esc(x.symbol)}<div class="sub">${esc(x.error)}</div></div><span class="badge" style="background:var(--label2)">خطأ</span></div>`;
-  const [col,lab]=GB[x.grade]||GB['-'],p=x.plan,ac=x.action==='BUY'?'شراء':x.action==='SELL'?'بيع':'انتظار',acc=x.action==='BUY'?'var(--green)':x.action==='SELL'?'var(--red)':'var(--label2)';
-  return `<div class="row" style="cursor:pointer" onclick="openAnalysis('${x.symbol}')"><div class="t">${esc(x.symbol)} <span class="v" style="font-size:14px;direction:ltr;display:inline-block">${x.price.toLocaleString(undefined,{maximumFractionDigits:5})}</span>
-  <div class="sub">${x.regime_label} · ${x.change>0?'+':''}${x.change}% · شراء ${x.buy_pct}% / بيع ${x.sell_pct}%${p?`\nدخول ${p.entry} · وقف ${p.stop_loss}\nربح ${p.take_profit} · ربح2 ${p.take_profit2}`:''}</div></div>
-  <div style="text-align:center"><span class="badge" style="background:${acc}">${x.decision==='APPROVED'?'✓ ':''}${ac}</span><div class="sub" style="color:${col}">${p?lab:''}</div></div></div>`}).join('')}</div>
- <div class="ft">A قوية · B متوسطة · C ضعيفة (مضاربة). ✓ = اجتازت الفلتر الصارم. الدرجات ليست ضماناً.</div>`:'';}
-$('#scanGo').onclick=async()=>{
- $('#scanGo').disabled=true;$('#scanList').innerHTML='';
- const r=await api('/api/scan',{capital:$('#capital').value,style});$('#scanProg').textContent='جارٍ المسح…';
- scanTimer=setInterval(async()=>{const j=await api('/api/job/'+r.id);drawScan(j);if(j.status==='done'){clearInterval(scanTimer);$('#scanGo').disabled=false}},1500);};
-function openAnalysis(sym){$('#symbol').value=sym;goTab('run');$('#go').click()}
-
-/* ---------- مختبر الاستراتيجيات ---------- */
-const ORG={builtin:['مدمجة','var(--label2)'],generated:['مولّدة بالبحث','var(--blue)'],llm:['اقتراح ذكاء اصطناعي','#af52de']};
-function drawLab(d){
- const s=d.summary;
- $('#labStats').innerHTML=`<div class="stats"><div><b>${s.total}</b><span>في المخزون</span></div><div><b style="color:var(--green)">${s.active}</b><span>نشطة</span></div><div><b>${s.generated}</b><span>مولّدة</span></div></div>
- <div class="ft" style="text-align:center">${s.tested||0} فكرة اختُبرت · آخر بحث: ${s.last_run?s.last_run.replace('T',' '):'لم يُجرَ بعد'}</div>`;
- const items=[...d.items].sort((a,b)=>(a.status==='active'?0:1)-(b.status==='active'?0:1));
- $('#labList').innerHTML=`<div class="group">${items.map(it=>{const v=(it.stats&&it.stats.val)||null,te=(it.stats&&it.stats.test)||null,[ol,oc]=ORG[it.origin]||ORG.builtin;
-  return `<div class="row tap" style="cursor:pointer" onclick="this.classList.toggle('open')"><div class="t">${esc(it.name)}<div class="sub">${v?`تحقق: ${v.n} صفقة · نجاح ${v.win_rate}% · PF ${v.pf} · ${v.avg_r}R\nاختبار أخير: ${te.n} صفقة · ${te.avg_r}R · اتساق ${Math.round((it.stats.consistency||0)*100)}%`:'لم تُختبر بعد — شغّل البحث'}</div></div>
-  <span class="badge" style="background:${it.status==='active'?oc:'var(--label2)'}">${it.status==='active'?ol:'موقوفة'}</span></div>
-  <div class="out">وقف ${it.exits.sl_atr}×ATR · هدف 1:${it.exits.rr} · خروج زمني ${it.exits.hold} شمعة${it.note?'\nالمصدر: '+esc(it.note):''}<div style="margin-top:8px"><button class="sm" onclick="event.stopPropagation();labToggle('${it.id}')">${it.status==='active'?'إيقاف':'تفعيل'}</button>${it.origin!=='builtin'?`<button class="sm red" onclick="event.stopPropagation();labDel('${it.id}')">حذف</button>`:''}</div></div>`}).join('')}</div>
- <div class="ft">«تحقق» و«اختبار أخير» نتائج على بيانات عدة أصول وفريمات مقسّمة زمنياً (60% تدريب · 20% تحقق · 20% اختبار أخير لم يُستعمل في الاختيار). الاستراتيجية النشطة تدخل التحليل فقط إن اجتازت اختباراً على الأصل نفسه أيضاً.</div>`;}
-function drawBrain(d){const s=d.summary,c=s.calibration;
- $('#brStats').innerHTML=`<div class="stats"><div><b>${s.cycles}</b><span>دورات تعلم</span></div><div><b>${s.relations}</b><span>علاقات مقبولة</span></div><div><b style="color:var(--green)">${s.lab.active}</b><span>استراتيجيات نشطة</span></div></div>
- <div class="ft" style="text-align:center">آخر دورة: ${s.last_cycle?s.last_cycle.replace('T',' '):'لم تبدأ بعد'}<br>${c?`معايرة من صفقاتك الحية (${c.n} صفقة): المتوقع ${c.est}% مقابل الفعلي ${c.actual}% ← عامل ${c.factor}`:'المعايرة من الصفقات الحية تبدأ بعد 20 صفقة محسومة.'}</div>`;
- $('#brRel').innerHTML=d.relations.length?`<div class="group">${d.relations.slice(0,15).map(r=>`<div class="row"><div class="t" style="font-size:14px">${esc(r.text)}</div><span class="badge" style="background:${r.kind==='leadlag'?'var(--blue)':'var(--label2)'}">${r.kind==='leadlag'?'تقدّم/تأخّر':'ارتباط'}</span></div>`).join('')}</div>`:'<div class="ft" style="text-align:center">لم تُكتشف علاقات بعد — شغّل دورة تعلم. الحدّ الصارم قد يعني أن النتيجة صفر، وهذا طبيعي.</div>';
- $('#brLog').innerHTML=d.log.length?`<div class="group">${d.log.slice(0,8).map(e=>`<div class="row tap" style="cursor:pointer" onclick="this.classList.toggle('open')"><div class="t" style="font-size:14px">${e.time.replace('T',' ')}<div class="sub">اختُبر ${e.strategies_tested} استراتيجية و${e.rel_tests} علاقة · أُضيف ${e.strategies_added.length} · أُوقف ${e.strategies_retired.length+e.live_retired.length}</div></div></div>
- <div class="out">${e.strategies_added.length?'✅ استراتيجيات: '+e.strategies_added.map(esc).join('، ')+'\n':''}${e.relations_added.length?'🔗 علاقات:\n'+e.relations_added.map(esc).join('\n')+'\n':''}${e.live_retired.length?'⏸ أوقفتها نتائجك الحية: '+e.live_retired.map(esc).join('، ')+'\n':''}${e.strategies_retired.length?'⏸ أُوقفت بعد فحص جديد: '+e.strategies_retired.map(esc).join('، '):''}${!e.strategies_added.length&&!e.relations_added.length?'لم يجد شيئاً يستحق القبول — البوابة صارمة عمداً.':''}</div>`).join('')}</div>`:'';}
-async function loadBrain(){drawBrain(await api('/api/brain'))}
-$('#brGo').onclick=async()=>{$('#brGo').disabled=true;$('#brBar').style.display='block';const r=await api('/api/brain/cycle',{llm:false});
- if(r.error){$('#brProg').textContent=r.error;$('#brGo').disabled=false;$('#brBar').style.display='none';return}
- const t=setInterval(async()=>{const j=await api('/api/job/'+r.id);$('#brProg').textContent=j.msg;$('#brBar i').style.width=j.pct+'%';
-  if(j.status!=='running'){clearInterval(t);$('#brGo').disabled=false;$('#brBar').style.display='none';$('#brProg').textContent=j.status==='done'?'اكتملت الدورة ✓':'خطأ: '+j.error;loadBrain();loadLab()}},1200)};
-async function loadLab(){loadBrain();const d=await api('/api/lab');drawLab(d);const st=await api('/api/status');AIKEY=st.key_set}
-async function labToggle(id){await api('/api/lab/toggle',{id});loadLab()}
-async function labDel(id){await api('/api/lab/delete',{id});loadLab()}
-async function startLab(llm){
- $('#labGo').disabled=$('#labAi').disabled=true;$('#labBar').style.display='block';
- const r=await api('/api/lab/discover',{llm,n:60});
- if(r.error){$('#labProg').textContent=r.error;$('#labGo').disabled=$('#labAi').disabled=false;$('#labBar').style.display='none';return}
- labTimer=setInterval(async()=>{const j=await api('/api/job/'+r.id);$('#labProg').textContent=j.msg;$('#labBar i').style.width=j.pct+'%';
-  if(j.status!=='running'){clearInterval(labTimer);$('#labGo').disabled=$('#labAi').disabled=false;$('#labBar').style.display='none';
-   $('#labProg').textContent=j.status==='done'?`اختُبرت ${j.result.tested} فكرة في ${j.result.seconds}ث — أُضيف: ${j.result.added.length?j.result.added.join('، '):'لا شيء (البوابة صارمة)'}${j.result.retired.length?' · أُوقف: '+j.result.retired.join('، '):''}`:'خطأ: '+j.error;loadLab()}},1200)}
-$('#labGo').onclick=()=>startLab(false);$('#labAi').onclick=()=>startLab(true);
-
-
-/* ---------- Market Intelligence + Paper Trading ---------- */
-function pct(v){return Number(v||0).toFixed(1)+'%'}
-function drawContext(d){
- const syn=d.synthesis||{}, bias=syn.bias==='bullish'?'صاعد':syn.bias==='bearish'?'هابط':'محايد';
- const color=syn.bias==='bullish'?'var(--green)':syn.bias==='bearish'?'var(--red)':'var(--label2)';
- const frames=Object.entries(d.frames||{}).map(([tf,x])=>`<div class="group" style="margin-top:10px"><div class="row"><div class="t"><b>${tf}</b><div class="sub">${esc(x.regime_label)} · ${esc(x.volatility)} · ADX ${x.adx}</div></div><span class="badge" style="background:${x.bias==='bullish'?'var(--green)':x.bias==='bearish'?'var(--red)':'var(--label2)'}">${x.bias==='bullish'?'صاعد':x.bias==='bearish'?'هابط':'محايد'}</span></div><div class="out" style="display:block">ميل صاعد ${pct(x.bull_bias_score)} · ميل هابط ${pct(x.bear_bias_score)}
-سيولة: ${x.liquidity.sweep_low?'سحب قاع':x.liquidity.sweep_high?'سحب قمة':'لا يوجد سحب مؤكد'}
-هيكل: ${x.structure.bos_up?'BOS صاعد':x.structure.bos_down?'BOS هابط':'لا كسر هيكل'}
-FVG: ${x.fvg.bullish?'صاعدة':x.fvg.bearish?'هابطة':'لا توجد'}
-${x.interpretation.map(esc).join(' · ')}</div></div>`).join('');
- $('#ctxResult').innerHTML=`<div class="verdict" style="background:var(--card);color:var(--label)"><small>السيناريو متعدد الفريمات</small><b style="color:${color}">${bias}</b><div>${esc(syn.scenario||'')}</div><div class="sub">قوة الميل النسبية ${pct(syn.bias_strength)} · توافق الفريمات: ${syn.timeframes_aligned?'نعم':'لا'}</div></div>${frames}<div class="ft">${esc(d.disclaimer||'')} · المصادر: ${esc(Object.values(d.sources||{}).join(' / '))}</div>`;
-}
-$('#ctxGo').onclick=async()=>{const b=$('#ctxGo');b.disabled=true;b.textContent='جارٍ تحليل البيانات…';$('#ctxResult').innerHTML='';
- try{const d=await api('/api/intelligence',{symbol:$('#ctxSymbol').value});if(d.error)$('#ctxResult').innerHTML=`<div class="err">${esc(d.error)} ${esc(JSON.stringify(d.details||{}))}</div>`;else drawContext(d)}catch(e){$('#ctxResult').innerHTML='<div class="err">تعذر الاتصال بالتطبيق</div>'}finally{b.disabled=false;b.textContent='🧠 حلّل سياق السوق'}};
-async function loadMt5(){
- const box=$('#mt5Status');box.textContent='جارٍ فحص MetaTrader 5…';
- try{const d=await api('/api/mt5/status');$('#mt5Auto').checked=!!(d.settings&&d.settings.auto_trade);$('#mt5Risk').value=d.settings?.risk_pct??0.5;
-  box.textContent=d.connected&&d.demo?`متصل بحساب Demo ✓ · ${d.server} · الرصيد ${Number(d.balance).toFixed(2)} ${d.currency} · Equity ${Number(d.equity).toFixed(2)}`:(d.error||'غير متصل بحساب Demo');
-  if(d.connected&&d.demo){const perf=await api('/api/mt5/performance');$('#mt5Performance').innerHTML=perf.available?`<div class="stats"><div><b>${perf.trades}</b><span>صفقات مغلقة (90 يوم)</span></div><div><b>${perf.win_rate==null?'—':perf.win_rate+'%'}</b><span>نسبة النجاح</span></div><div><b>${Number(perf.net_pnl).toFixed(2)} ${esc(perf.currency)}</b><span>صافي الربح</span></div></div><div class="ft">رابحة ${perf.wins} · خاسرة ${perf.losses} · متوسط الربح ${perf.avg_win??'—'} · متوسط الخسارة ${perf.avg_loss??'—'} · مراكز مفتوحة ${perf.open_positions.length}<br>${esc(perf.scope)}</div>`:`<div class="ft">${esc(perf.error||'بيانات الأداء غير متاحة')}</div>`;}else $('#mt5Performance').innerHTML='';
- }catch(e){box.textContent='تعذر فحص MT5'}
-}
-$('#mt5Connect').onclick=async()=>{const b=$('#mt5Connect');b.disabled=true;b.textContent='جارٍ الاتصال…';await loadMt5();b.disabled=false;b.textContent='اتصال وفحص حساب Demo'};
-$('#mt5Save').onclick=async()=>{const enabled=$('#mt5Auto').checked;const r=await api('/api/mt5/auto',{enabled,risk_pct:$('#mt5Risk').value});$('#mt5Status').textContent=r.error|| (enabled?'تم تفعيل التداول التلقائي على Demo فقط':'تم إيقاف التداول التلقائي');if(r.ok)loadMt5();else $('#mt5Auto').checked=false};
-async function loadPaper(){const d=await api('/api/paper?refresh=1');drawPaper(d)}
-function drawPaper(d){$('#paperStats').innerHTML=`<div class="stats"><div><b>${Number(d.equity).toFixed(2)}</b><span>قيمة المحفظة</span></div><div><b style="color:${d.realized_pnl>=0?'var(--green)':'var(--red)'}">${Number(d.realized_pnl).toFixed(2)}</b><span>ربح محقق</span></div><div><b>${Number(d.unrealized_pnl).toFixed(2)}</b><span>ربح عائم</span></div></div><div class="ft">الرصيد النقدي ${Number(d.cash).toFixed(2)} USDT · وضع تجريبي فقط</div>`;
- $('#paperPositions').innerHTML=`<div class="hd">المراكز المفتوحة (${d.positions.length})</div>${d.positions.length?`<div class="group">${d.positions.map(p=>`<div class="row"><div class="t">${esc(p.symbol)} · ${p.side==='LONG'?'شراء':'بيع'}<div class="sub">دخول ${p.entry} · السعر ${p.mark_price} · وقف ${p.stop} · هدف ${p.target}
-كمية ${Number(p.qty).toFixed(6)} · عائم ${Number(p.unrealized_pnl).toFixed(2)}</div></div><button class="sm red" onclick="paperClose('${p.id}')">إغلاق</button></div>`).join('')}</div>`:'<div class="ft">لا توجد مراكز ورقية مفتوحة.</div>'}`;
-}
-$('#ofGo').onclick=async()=>{
- const box=$('#ofResult');box.innerHTML='<div class="ft">جارٍ جلب الصفقات ودفتر الأوامر…</div>';
- const r=await api('/api/orderflow',{symbol:$('#ctxSymbol').value});
- if(!r.available){box.innerHTML=`<div class="card mini">${esc(r.error||r.reason||'البيانات غير متاحة')}</div>`;return}
- const n=v=>v==null?'غير متاح':Number(v).toLocaleString('en-US',{maximumFractionDigits:4});
- const signed=Number(r.cvd_ratio)>=0?'var(--green)':'var(--red)';
- box.innerHTML=`<div class="card"><b>📈 تدفق الصفقات — ${esc(r.venue)}</b>
- <div class="stats"><div><b>${n(r.cvd_notional)}</b><span>CVD صافي (قيمة)</span></div><div><b>${n(r.cvd_ratio*100)}%</b><span>انحياز CVD</span></div><div><b>${n(r.trade_count)}</b><span>صفقة بالعينة</span></div></div>
- <div class="mini">شراء منفذ: ${n(r.buy_notional)} · بيع منفذ: ${n(r.sell_notional)}<br>
- <b>دفتر الأوامر</b><br>عمق الشراء: ${n(r.bid_depth_notional)} · عمق البيع: ${n(r.ask_depth_notional)}<br>
- اختلال العمق: ${n(r.book_imbalance*100)}% · السبريد: ${n(r.spread_bps)} نقطة أساس<br>
- أفضل طلب شراء: ${n(r.best_bid)} · أفضل طلب بيع: ${n(r.best_ask)}<hr style="border-color:var(--line);opacity:.35">
- <b>المشتقات والتصفية</b><br>Funding: ${n(r.funding_rate)} · Open Interest: ${n(r.open_interest)}<br>
- ${r.liquidations?`التصفيات المرصودة: ${n(r.liquidations.count)} · القيمة التقريبية: ${n(r.liquidations.notional)}`:'بيانات التصفية غير مدعومة أو غير متاحة من هذه المنصة'}<br>
- <b>الامتصاص المحتمل:</b> ${r.absorption_possible===null?'غير كافٍ':r.absorption_possible?'اشتباه امتصاص — تحقق من السياق':'لم يُرصد وفق الاختبار المبسط'}<br>
- <small>${r.warnings.map(esc).join('<br>')}</small>
- ${r.errors.length?`<br><small>ملاحظات مصدر البيانات: ${r.errors.map(esc).join(' · ')}</small>`:''}
- </div></div>`;
-};
-$('#paperOpen').onclick=async()=>{const r=await api('/api/paper/open',{symbol:$('#ctxSymbol').value,side:$('#paperSide').value,entry:$('#paperEntry').value,stop:$('#paperStop').value,target:$('#paperTarget').value,risk_pct:$('#paperRisk').value});$('#paperMsg').textContent=r.error||'تم فتح المركز الورقي ✓';if(r.ok){$('#paperEntry').value=$('#paperStop').value=$('#paperTarget').value='';loadPaper()}};
-async function paperClose(id){const r=await api('/api/paper/close',{id});$('#paperMsg').textContent=r.error||'تم إغلاق المركز الورقي ✓';loadPaper()}
-
-/* ---------- السجل ---------- */
-function badge(x){if(x.status==='open')return['مفتوحة','var(--orange)'];if(x.status==='tp')return['حققت الهدف','var(--green)'];
- if(x.status==='sl')return['ضُرب الوقف','var(--red)'];if(x.status==='expired')return['منتهية','var(--label2)'];
- return x.decision==='REJECTED'?['مرفوض','var(--label2)']:['—','var(--label2)']}
-function drawHist(d){
- const h=d.items,s=d.stats;$('#clr').style.display=h.length?'block':'none';
- $('#hstats').innerHTML=s.approved?`<div class="stats"><div><b>${s.approved}</b><span>صفقات مقترحة</span></div><div><b style="color:var(--green)">${s.tp}</b><span>حققت الهدف</span></div><div><b style="color:var(--red)">${s.sl}</b><span>ضُرب الوقف</span></div></div>
- <div class="stats"><div><b>${s.win_rate===null?'—':s.win_rate+'%'}</b><span>نسبة النجاح الفعلية</span></div><div><b>${s.avg_r===null?'—':s.avg_r}</b><span>متوسط R</span></div><div><b>${s.open}</b><span>مفتوحة</span></div></div>
- <div class="ft">${s.tp+s.sl<30?'النتائج المحسومة أقل من 30 صفقة — لا تبنِ عليها قراراً بعد. ':''}R: الربح بوحدات المخاطرة (الوقف = -1).</div>`:'';
- $('#hist').innerHTML=h.length?`<div class="group" style="margin-top:12px">${h.map(x=>{const [t,col]=badge(x),ac=x.plan?(x.plan.action==='SELL'?'📉 بيع':'📈 شراء')+' · ':'';
-  return `<div class="row tap" style="cursor:pointer" onclick="this.classList.toggle('open')"><div class="t">${esc(x.symbol)}<div class="sub">${ac}${x.time.replace('T',' ')} · ${x.style==='scalp'?'سكالبينج':'صفقات'} · ${x.mode==='ai'?'ذكاء اصطناعي':x.mode==='auto'?'مسح تلقائي':'محلي'}${x.r!=null?' · R '+x.r:''}</div></div>
-  <span class="badge" style="background:${col}">${t}</span></div><div class="out">${esc(x.report)}</div>`}).join('')}</div>`
- :'<div class="empty"><div class="e">🗂️</div><p>لا توجد قرارات بعد.<br>شغّل أول تحليل من تبويب التحليل.</p></div>';}
-async function loadHist(){drawHist(await api('/api/history'));
- $('#hupd').textContent='جارٍ تحديث نتائج الصفقات المفتوحة…';await api('/api/tracker/refresh',{});drawHist(await api('/api/history'));$('#hupd').textContent=''}
-$('#clr').onclick=async()=>{await api('/api/history/clear',{});loadHist()};
-
-/* ---------- الإعدادات ---------- */
-async function loadStatus(){
- const s=await api('/api/status');$('#s-ai').textContent=s.ai_installed?'مثبتة ✓':'غير مثبتة';$('#s-key').textContent=s.key_set?'موجود ✓':'غير موجود';
- $('#s-xai').textContent=s.xai_set?'موجود ✓':'غير موجود';$('#grok_model').value=s.grok_model;$('#grok_review').value=s.grok_review?'1':'0';
- $('#s-tg').textContent=s.tg_set?'مضبوط ✓':'غير مضبوط';$('#s-auto').textContent=s.auto_min?`كل ${s.auto_min} دقيقة ✓`:'مطفأ';
- $('#worker').value=s.worker;$('#ceo').value=s.ceo;$('#watchlist').value=s.watchlist;$('#auto_min').value=s.auto_min;$('#s_capital').value=s.capital;$('#tg_chat').value=s.tg_chat;
- $('#auto_mode').value=s.auto_mode;$('#lab_hours').value=s.lab_hours||'';}
-$('#save').onclick=async()=>{
- const r=await api('/api/settings',{key:$('#key').value,worker:$('#worker').value,ceo:$('#ceo').value,watchlist:$('#watchlist').value,auto_min:$('#auto_min').value,capital:$('#s_capital').value,tg_token:$('#tg_token').value,tg_chat:$('#tg_chat').value,auto_mode:$('#auto_mode').value,lab_hours:$('#lab_hours').value,xai_key:$('#xai_key').value,grok_model:$('#grok_model').value,grok_review:$('#grok_review').value});
- $('#setMsg').textContent=r.error||'تم الحفظ ✓';if(!r.error){$('#key').value='';$('#tg_token').value='';$('#xai_key').value=''}loadStatus();setTimeout(()=>$('#setMsg').textContent='',2500)};
-$('#tgTest').onclick=async()=>{$('#setMsg').textContent='جارٍ الإرسال…';const r=await api('/api/notify/test',{});$('#setMsg').textContent=r.ok?'وصل التنبيه التجريبي ✓':'فشل: '+(r.error||'')};
-
-/* ---------- إشعارات منبثقة ---------- */
-function toast(a){const l=a.text.split('\n');$('#toastT').textContent=l[0];$('#toastB').textContent=l.slice(2,6).join('\n');
- $('#toast').classList.add('show');$('#toast').onclick=()=>{$('#toast').classList.remove('show');goTab('hist')};setTimeout(()=>$('#toast').classList.remove('show'),9000)}
-setInterval(async()=>{try{(await api('/api/alerts?after='+lastAlert)).forEach(a=>{lastAlert=a.id;toast(a)})}catch(e){}},20000);
-api('/api/status').then(s=>{STEPS=s.steps;lastAlert=s.alert_id;
- $('#pairs').innerHTML=s.assets.flatMap(g=>g.items).map(i=>`<option value="${i.symbol}">${i.name}`).join('');
- $('#pick').innerHTML='<option value="">اختر…</option>'+s.assets.map(g=>`<optgroup label="${g.label}">${g.items.map(i=>`<option value="${i.symbol}">${i.name} — ${i.symbol}</option>`).join('')}</optgroup>`).join('')});
-</script>
-
+<div class="toast" id="toast" role="status"><b id="toastT"></b><span id="toastB"></span></div>
+<script src="/static/app.js"></script>
 </body>
 </html>

@@ -3,6 +3,7 @@ import time
 import numpy as np
 import pandas as pd
 import requests
+import deps
 from tools import assets as A
 
 EXCHANGES = ["binance", "bybit", "okx", "kraken"]   # تبديل تلقائي إذا حُجبت منصة
@@ -13,7 +14,9 @@ TTL = {"5m": 60, "15m": 120, "1h": 300, "4h": 600, "1d": 1800}   # ثوانٍ: �
 
 
 def _exchange(name):
-    import ccxt
+    ccxt = deps.lazy("ccxt")
+    if ccxt is None:
+        raise RuntimeError(f'مكتبة ccxt غير مثبتة. نفّذ: "{deps.sys.executable}" -m pip install ccxt')
     if name not in _cache:
         _cache[name] = getattr(ccxt, name)({"enableRateLimit": True})
     return _cache[name]
@@ -49,32 +52,68 @@ def _ccxt_candles(symbol, tf, limit):
     return name, _frame(rows)
 
 
+_YH = {"User-Agent": "Mozilla/5.0 (compatible; TradingFirm/6.3)"}
+_YF_INTERVAL = {"5m": "5m", "15m": "15m", "1h": "60m", "4h": "60m", "1d": "1d"}
+
+
+def _yahoo_http(ys, interval, days=None, start_ms=None):
+    """احتياط بلا yfinance: واجهة Yahoo Chart المباشرة عبر requests. يعيد DataFrame بفهرس UTC وأعمدة open/high/low/close/volume."""
+    now = int(time.time())
+    p1 = int(start_ms / 1000) if start_ms else now - int(days or 60) * 86400
+    r = requests.get(f"https://query1.finance.yahoo.com/v8/finance/chart/{ys}", headers=_YH, timeout=15,
+                     params={"interval": interval, "period1": p1, "period2": now, "includePrePost": "false"})
+    r.raise_for_status()
+    res = (r.json().get("chart", {}).get("result") or [None])[0]
+    if not res or not res.get("timestamp"):
+        return pd.DataFrame()
+    q = res["indicators"]["quote"][0]
+    df = pd.DataFrame({"open": q.get("open"), "high": q.get("high"), "low": q.get("low"), "close": q.get("close"),
+                       "volume": q.get("volume") or [0] * len(res["timestamp"])},
+                      index=pd.to_datetime(res["timestamp"], unit="s", utc=True))
+    df["volume"] = df["volume"].fillna(0)
+    return df.dropna(subset=["open", "high", "low", "close"])
+
+
+def _yahoo_df(ys, tf, days=None, start_ms=None):
+    """بيانات Yahoo لرمز واحد: يجرّب yfinance (ويثبّته تلقائياً إن نقص) ثم يسقط إلى HTTP المباشر."""
+    interval = _YF_INTERVAL.get(tf, "60m")
+    yf = deps.lazy("yfinance")
+    if yf is not None:
+        try:
+            kw = {"start": pd.Timestamp(start_ms, unit="ms", tz="UTC") - pd.Timedelta(hours=1)} if start_ms else {"period": f"{int(days or 60)}d"}
+            raw = yf.download(ys, interval=interval, progress=False, auto_adjust=False, threads=False, **kw)
+            if raw is not None and not raw.empty:
+                if isinstance(raw.columns, pd.MultiIndex):
+                    raw.columns = raw.columns.get_level_values(0)
+                raw = raw.rename(columns=str.lower)
+                if "volume" not in raw.columns:
+                    raw["volume"] = 0.0
+                raw = raw[["open", "high", "low", "close", "volume"]]
+                raw.index = raw.index.tz_localize("UTC") if raw.index.tz is None else raw.index.tz_convert("UTC")
+                return raw
+        except Exception:  # noqa: BLE001
+            pass
+    return _yahoo_http(ys, interval, days, start_ms)
+
+
 def _yf_candles(symbol, tf, limit):
-    import yfinance as yf
-    interval, period = {"5m": ("5m", "60d"), "15m": ("15m", "60d"), "1h": ("60m", "730d"),
-                        "4h": ("60m", "730d"), "1d": ("1d", "5y")}[tf]
+    days = {"5m": 60, "15m": 60, "1h": 730, "4h": 730, "1d": 1825}[tf]
     last = None
     for ys in A.yf_symbols(symbol):
         try:
-            raw = yf.download(ys, period=period, interval=interval, progress=False, auto_adjust=False, threads=False)
+            raw = _yahoo_df(ys, tf, days=days)
             if raw is None or raw.empty:
                 continue
-            if isinstance(raw.columns, pd.MultiIndex):
-                raw.columns = raw.columns.get_level_values(0)
-            raw = raw.rename(columns=str.lower)
-            if "volume" not in raw.columns:
-                raw["volume"] = 0.0
-            raw = raw[["open", "high", "low", "close", "volume"]]
             if tf == "4h":
                 raw = raw.resample("4h").agg({"open": "first", "high": "max", "low": "min", "close": "last", "volume": "sum"}).dropna()
-            idx = raw.index.tz_localize("UTC") if raw.index.tz is None else raw.index.tz_convert("UTC")
-            ts_ms = ((idx - pd.Timestamp("1970-01-01", tz="UTC")) // pd.Timedelta(milliseconds=1)).astype("int64")
+            ts_ms = ((raw.index - pd.Timestamp("1970-01-01", tz="UTC")) // pd.Timedelta(milliseconds=1)).astype("int64")
             out = raw.reset_index(drop=True)
             out.insert(0, "ts", np.asarray(ts_ms))
             return f"Yahoo Finance ({ys})", _frame(out.tail(limit).values.tolist())
         except Exception as e:  # noqa: BLE001
             last = e
-    raise RuntimeError(f"تعذر جلب بيانات {symbol} من Yahoo Finance ({last}). تأكد من تثبيت yfinance ومن الإنترنت.")
+    raise RuntimeError(f"تعذر جلب بيانات {symbol} من Yahoo Finance ({last or 'لا بيانات'}). تأكد من الإنترنت — "
+                       f"وإن كان السبب نقص مكتبة فنفّذ: \"{deps.sys.executable}\" -m pip install yfinance")
 
 
 def candles(symbol, tf="4h", limit=None):
@@ -96,11 +135,10 @@ def quote(symbol):
         if A.kind(symbol) == "crypto":
             _, t = _call("fetch_ticker", symbol)
             return float(t["last"]), (None if t.get("percentage") is None else float(t["percentage"]))
-        import yfinance as yf
         for ys in A.yf_symbols(symbol):
-            h = yf.Ticker(ys).history(period="1d", interval="1m")
-            if len(h):
-                return float(h["Close"].iloc[-1]), None
+            h = _yahoo_df(ys, "5m", days=2)
+            if h is not None and len(h):
+                return float(h["close"].iloc[-1]), None
     except Exception:  # noqa: BLE001
         pass
     return None, None
@@ -111,17 +149,11 @@ def history_since(symbol, ts_ms, tf="1h"):
     if A.kind(symbol) == "crypto":
         _, raw = _call("fetch_ohlcv", symbol, timeframe=tf, since=int(ts_ms), limit=1000)
         return raw
-    import yfinance as yf
-    from datetime import datetime, timezone
-    start = datetime.fromtimestamp(ts_ms / 1000 - 3600, tz=timezone.utc)
     for ys in A.yf_symbols(symbol):
-        h = yf.download(ys, start=start, interval={"5m": "5m", "15m": "15m", "1h": "60m"}.get(tf, "60m"), progress=False, auto_adjust=False, threads=False)
+        h = _yahoo_df(ys, tf if tf in ("5m", "15m", "1h") else "1h", start_ms=ts_ms)
         if h is None or h.empty:
             continue
-        if isinstance(h.columns, pd.MultiIndex):
-            h.columns = h.columns.get_level_values(0)
-        idx = h.index.tz_convert("UTC") if h.index.tz is not None else h.index.tz_localize("UTC")
-        return [[int(t.timestamp() * 1000), r.Open, r.High, r.Low, r.Close, 0] for t, r in zip(idx, h.itertuples())]
+        return [[int(t.timestamp() * 1000), float(r.open), float(r.high), float(r.low), float(r.close), 0] for t, r in zip(h.index, h.itertuples())]
     return []
 
 

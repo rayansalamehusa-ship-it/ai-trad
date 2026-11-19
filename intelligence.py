@@ -68,8 +68,8 @@ def analyze_frame(df: pd.DataFrame, timeframe="5m"):
     return {"timeframe":timeframe,"bars":len(d),"price":_f(px,8),"regime":regime,"regime_label":labels[regime],"volatility":volatility,"atr_pct":_f(atr_pct,3),"atr_percentile":_f(vol_rank*100,1),"adx":_f(adx_now,2),"bias":bias,"bull_score":_f(bull,2),"bear_score":_f(bear,2),"bull_bias_score":_f(bp,1),"bear_bias_score":_f(100-bp,1),"structure":{"bos_up":bool(bos_up),"bos_down":bool(bos_down),"reference_high":_f(struct_hi,8),"reference_low":_f(struct_lo,8)},"liquidity":{"sweep_high":bool(sweep_high),"sweep_low":bool(sweep_low),"prior_high":_f(prior_high,8),"prior_low":_f(prior_low,8)},"fvg":{"bullish":bool(bull_fvg),"bearish":bool(bear_fvg),"bullish_gap":_f(bull_gap,8),"bearish_gap":_f(bear_gap,8)},"volume_proxy":{"z_score":_f(vz,2),"signed_pressure_estimate":_f(vol_proxy,2),"warning":"تقدير من OHLCV وليس Order Flow حقيقياً"},"interpretation":notes}
 
 
-def combine(frames):
-    weights={"1h":.5,"15m":.3,"5m":.2}
+def combine(frames, weights=None):
+    weights=weights or {"1h":.5,"15m":.3,"5m":.2}
     used=[(tf,x) for tf,x in frames.items() if tf in weights]
     if not used: return {"bias":"unknown","confidence":0,"scenario":"لا توجد بيانات كافية"}
     bull=sum(weights[t]*(x["bull_bias_score"] or 50) for t,x in used)/sum(weights[t] for t,_ in used)
